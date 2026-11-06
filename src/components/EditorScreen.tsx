@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   RotateCcw,
   Sparkles,
@@ -6,6 +6,8 @@ import {
   Monitor,
   Check,
   FileText,
+  Download,
+  Package,
 } from 'lucide-react';
 
 interface EditorScreenProps {
@@ -29,6 +31,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   showPhoneFrame,
   setShowPhoneFrame,
 }) => {
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
   // Sync selection state on mouse/keyboard changes in textarea
   const handleSelect = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
@@ -112,6 +116,49 @@ Features:
               <Smartphone className="w-3.5 h-3.5" />
             )}
           </button>
+
+          {/* Download APK & GitHub Package */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+              title="Download APK / GitHub Package"
+              className="px-2 py-1 text-xs font-semibold rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 transition-colors flex items-center gap-1"
+            >
+              <Download className="w-3 h-3 text-sky-400" />
+              <span>APK</span>
+            </button>
+
+            {showDownloadMenu && (
+              <div className="absolute right-0 top-8 z-50 w-56 rounded-xl bg-[#141720] border border-slate-700 shadow-2xl p-1.5 space-y-1 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <a
+                  href="/downloads/app-debug.apk"
+                  download="app-debug.apk"
+                  onClick={() => setShowDownloadMenu(false)}
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 transition-colors"
+                >
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  <div>
+                    <div className="font-semibold text-white">Download APK</div>
+                    <div className="text-[10px] text-slate-400">build-outputs/app-debug.apk</div>
+                  </div>
+                </a>
+
+                <a
+                  href="/downloads/onyxkey-github-package.zip"
+                  download="onyxkey-github-package.zip"
+                  onClick={() => setShowDownloadMenu(false)}
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 transition-colors"
+                >
+                  <Package className="w-4 h-4 text-sky-400" />
+                  <div>
+                    <div className="font-semibold text-white">GitHub Package (.zip)</div>
+                    <div className="text-[10px] text-slate-400">Complete repo with APK & CI</div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
