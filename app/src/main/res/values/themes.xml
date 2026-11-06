@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.OnyxKey" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#090B10</item>
+        <item name="android:navigationBarColor">#090B10</item>
+    </style>
+</resources>

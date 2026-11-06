@@ -1,0 +1,77 @@
+name: Android App GitHub Release ("test")
+
+on:
+  push:
+    tags:
+      - 'test'
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release Tag'
+        required: true
+        default: 'test'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install & Validate Web Preview
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Ensure Build Outputs Directory
+        run: |
+          mkdir -p build-outputs
+          ls -la build-outputs/
+
+      - name: Publish GitHub Release (version "test")
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag || 'test' }}
+          name: "OnyxKey Keyboard - Release ${{ github.event.inputs.release_tag || 'test' }}"
+          body: |
+            ## OnyxKey High-Contrast Keyboard - Android APK Release (${{ github.event.inputs.release_tag || 'test' }})
+
+            ### What's Included:
+            - **app-test.apk**: Android Input Method Service (IME) package
+            - **app-debug.apk**: Debug build
+            - Standard QWERTY layout with Tab key
+            - Bottom row with comma (`,`) and period (`.`)
+            - Spacebar swipe-left gesture with infinity (`∞`) to access numbers & symbols
+
+            ### Installation:
+            1. Download `app-test.apk` onto your Android device.
+            2. Tap the downloaded APK to install.
+            3. Open OnyxKey and enable it in your system keyboard settings.
+          files: |
+            build-outputs/app-test.apk
+            build-outputs/app-debug.apk
+            build-outputs/app-debug.APK
+          draft: false
+          prerelease: false

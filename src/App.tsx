@@ -74,22 +74,27 @@ export default function App() {
       {/* Background ambient texture */}
       <div className="absolute inset-0 bg-radial from-slate-900/40 via-transparent to-black pointer-events-none" />
 
-      {/* Top minimal header bar with Direct APK download */}
+      {/* Top minimal header bar with Direct APK download for version "test" */}
       <header className="relative z-20 flex items-center justify-between px-4 py-3 border-b border-slate-800/60 bg-[#0c0e14]/90 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           <h1 className="text-sm font-bold tracking-tight text-white">OnyxKey</h1>
-          <span className="text-xs text-slate-500 font-medium">· Keyboard Overlay App</span>
+          <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 font-mono text-sky-400 font-semibold">
+            v"test"
+          </span>
+          <span className="text-xs text-slate-500 font-medium hidden sm:inline">· Android Keyboard App</span>
         </div>
 
-        <a
-          href="/downloads/app-debug.apk"
-          download="app-debug.apk"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Download APK</span>
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="/downloads/app-test.apk"
+            download="app-test.apk"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download APK (test)</span>
+          </a>
+        </div>
       </header>
 
       {/* Screen area above keyboard: Live overlay typing display */}
