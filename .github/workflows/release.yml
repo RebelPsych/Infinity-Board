@@ -54,9 +54,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.release_tag || 'test' }}
-          name: "OnyxKey Keyboard - Release ${{ github.event.inputs.release_tag || 'test' }}"
+          name: "Infinity Board - Release ${{ github.event.inputs.release_tag || 'test' }}"
           body: |
-            ## OnyxKey High-Contrast Keyboard - Android APK Release (${{ github.event.inputs.release_tag || 'test' }})
+            ## Infinity Board - Android APK Release (${{ github.event.inputs.release_tag || 'test' }})
 
             ### What's Included:
             - **app-test.apk**: Android Input Method Service (IME) package
@@ -68,7 +68,7 @@ jobs:
             ### Installation:
             1. Download `app-test.apk` onto your Android device.
             2. Tap the downloaded APK to install.
-            3. Open OnyxKey and enable it in your system keyboard settings.
+            3. Open Infinity Board and enable it in your system keyboard settings.
           files: |
             build-outputs/app-test.apk
             build-outputs/app-debug.apk

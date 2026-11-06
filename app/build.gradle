@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.onyxkey.keyboard'
+    namespace 'com.infinityboard.keyboard'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.onyxkey.keyboard"
+        applicationId "com.infinityboard.keyboard"
         minSdk 24
         targetSdk 34
         versionCode 1

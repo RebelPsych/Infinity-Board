@@ -78,7 +78,7 @@ export default function App() {
       <header className="relative z-20 flex items-center justify-between px-4 py-3 border-b border-slate-800/60 bg-[#0c0e14]/90 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <h1 className="text-sm font-bold tracking-tight text-white">OnyxKey</h1>
+          <h1 className="text-sm font-bold tracking-tight text-white">Infinity Board</h1>
           <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 font-mono text-sky-400 font-semibold">
             v"test"
           </span>
