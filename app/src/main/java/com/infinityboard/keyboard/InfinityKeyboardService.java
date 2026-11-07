@@ -23,9 +23,14 @@ public class InfinityKeyboardService extends InputMethodService {
         keyboardContainer = new LinearLayout(this);
         keyboardContainer.setOrientation(LinearLayout.VERTICAL);
         keyboardContainer.setBackgroundColor(Color.parseColor("#0D0F14"));
-        keyboardContainer.setPadding(2, 6, 2, 8);
 
-        int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.46f);
+        // Add ergonomic bottom padding to lift bottom row and reduce thumb strain
+        float density = getResources().getDisplayMetrics().density;
+        int bottomPadding = (int) (28 * density);
+        keyboardContainer.setPadding(2, 6, 2, bottomPadding);
+
+        // Increase height to 50% of screen height
+        int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.50f);
         keyboardContainer.setLayoutParams(new ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, height));
 
