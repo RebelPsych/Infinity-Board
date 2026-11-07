@@ -15,9 +15,11 @@ interface KeyProps {
   width?: string;
   onClick: () => void;
   onLongPress?: () => void;
+  onHoldCapitalize?: (upperChar: string) => void;
+  canCapitalize?: boolean;
   settings: KeyboardSettings;
   soundType?: 'mechanical' | 'soft-click' | 'typewriter' | 'bubble';
-  specialType?: 'enter' | 'delete' | 'space' | 'copy' | 'paste' | 'swipe';
+  specialType?: 'enter' | 'delete' | 'space';
   ariaLabel?: string;
   children?: React.ReactNode;
 }
@@ -34,20 +36,26 @@ export const Key: React.FC<KeyProps> = ({
   width,
   onClick,
   onLongPress,
+  onHoldCapitalize,
+  canCapitalize = false,
   settings,
   specialType,
   ariaLabel,
   children,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
+  const [isHoldingCapital, setIsHoldingCapital] = useState(false);
   const timerRef = useRef<number | null>(null);
   const repeatTimerRef = useRef<number | null>(null);
+  const holdCapitalTimerRef = useRef<number | null>(null);
+  const didTriggerHoldRef = useRef(false);
 
   const active = isPressed || isPhysicalActive || isActive;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     setIsPressed(true);
+    didTriggerHoldRef.current = false;
 
     if (settings.soundEnabled) {
       if (specialType) {
@@ -59,7 +67,19 @@ export const Key: React.FC<KeyProps> = ({
 
     triggerHaptic(isSpecial ? 'medium' : 'light', settings.hapticsEnabled);
 
-    onClick();
+    // If this is a letter key that can be held down to capitalize
+    if (canCapitalize && typeof label === 'string' && label.length === 1 && onHoldCapitalize) {
+      const upper = label.toUpperCase();
+      holdCapitalTimerRef.current = window.setTimeout(() => {
+        didTriggerHoldRef.current = true;
+        setIsHoldingCapital(true);
+        triggerHaptic('medium', settings.hapticsEnabled);
+        if (settings.soundEnabled) {
+          soundManager.playKeyClick('mechanical', settings.soundVolume);
+        }
+        onHoldCapitalize(upper);
+      }, 280);
+    }
 
     // Long press repeat for backspace / delete
     if (onLongPress) {
@@ -77,7 +97,22 @@ export const Key: React.FC<KeyProps> = ({
   };
 
   const handlePointerUp = () => {
+    if (holdCapitalTimerRef.current) {
+      clearTimeout(holdCapitalTimerRef.current);
+      holdCapitalTimerRef.current = null;
+    }
+
+    // If hold-to-capitalize did not trigger, it's a normal tap
+    if (!didTriggerHoldRef.current && !onLongPress) {
+      onClick();
+    } else if (onLongPress && !timerRef.current) {
+      // For backspace, click on tap if not already long-pressing
+      onClick();
+    }
+
     setIsPressed(false);
+    setIsHoldingCapital(false);
+
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -89,57 +124,44 @@ export const Key: React.FC<KeyProps> = ({
   };
 
   const handlePointerLeave = () => {
-    handlePointerUp();
+    if (holdCapitalTimerRef.current) {
+      clearTimeout(holdCapitalTimerRef.current);
+      holdCapitalTimerRef.current = null;
+    }
+    setIsPressed(false);
+    setIsHoldingCapital(false);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (repeatTimerRef.current) {
+      clearInterval(repeatTimerRef.current);
+      repeatTimerRef.current = null;
+    }
   };
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (repeatTimerRef.current) clearInterval(repeatTimerRef.current);
+      if (holdCapitalTimerRef.current) clearTimeout(holdCapitalTimerRef.current);
     };
   }, []);
 
-  // Theme-specific styles
-  const getThemeClasses = () => {
-    switch (settings.theme) {
-      case 'pure-black':
-        return isSpecial
-          ? active
-            ? 'bg-slate-700 text-white border-slate-500 shadow-inner'
-            : 'bg-[#181a20] text-slate-200 border-[#2b303c] hover:bg-[#20242c]'
-          : active
-          ? 'bg-slate-200 text-black border-white shadow-lg'
-          : 'bg-[#222733] text-white border-[#343b4d] hover:bg-[#2a303f]';
-
-      case 'high-contrast-neon':
-        return isSpecial
-          ? active
-            ? 'bg-cyan-500 text-black border-cyan-300 font-bold'
-            : 'bg-[#12161f] text-cyan-400 border-cyan-900/60 hover:bg-[#181f2c]'
-          : active
-          ? 'bg-cyan-400 text-black border-cyan-200 font-bold'
-          : 'bg-[#1a202c] text-white border-cyan-500/30 hover:border-cyan-400/60';
-
-      case 'matrix-green':
-        return isSpecial
-          ? active
-            ? 'bg-emerald-500 text-black border-emerald-300'
-            : 'bg-[#101912] text-emerald-400 border-emerald-900/70 hover:bg-[#162419]'
-          : active
-          ? 'bg-emerald-400 text-black border-emerald-300'
-          : 'bg-[#142117] text-emerald-100 border-emerald-700/40 hover:bg-[#1b2c1f]';
-
-      case 'charcoal':
-      default:
-        return isSpecial
-          ? active
-            ? 'bg-slate-700 text-white border-slate-500'
-            : 'bg-[#1e222b] text-slate-200 border-[#2e3442] hover:bg-[#252b36]'
-          : active
-          ? 'bg-white text-slate-950 border-white font-bold'
-          : 'bg-[#282e3b] text-white border-[#3c4558] hover:bg-[#313847]';
+  // Simple Keyboard Black and grey with high contrast white lettering
+  const getKeyClasses = () => {
+    if (isSpecial) {
+      return active
+        ? 'bg-slate-700 text-white border-slate-500 shadow-md scale-[0.97]'
+        : 'bg-[#181a22] text-slate-200 border-[#2b303e] hover:bg-[#20242e] shadow-sm';
     }
+    return active
+      ? 'bg-slate-300 text-black border-white font-bold shadow-lg scale-[0.97]'
+      : 'bg-[#252834] text-white border-[#383f50] hover:bg-[#2e3342] shadow-sm';
   };
+
+  // Label display when holding capital
+  const displayLabel = isHoldingCapital && typeof label === 'string' ? label.toUpperCase() : label;
 
   return (
     <div
@@ -149,15 +171,15 @@ export const Key: React.FC<KeyProps> = ({
         flexBasis: 0,
         minWidth: width || 'auto',
       }}
-      className="relative flex items-center justify-center p-[2px] touch-none select-none h-full"
+      className="relative flex items-center justify-center p-[2.5px] touch-none select-none h-full"
     >
-      {/* Key Popup bubble when pressed (native mobile keyboard feel) */}
+      {/* Key Popup bubble when pressed */}
       {settings.showKeyPopup && isPressed && typeof label === 'string' && label.length === 1 && (
-        <div className="absolute -top-11 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
-          <div className="bg-slate-100 text-slate-950 text-2xl font-bold px-3 py-1.5 rounded-lg shadow-2xl border border-slate-300 flex items-center justify-center min-w-[42px] min-h-[42px]">
-            {label}
+        <div className="absolute -top-12 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
+          <div className="bg-[#1c202a] text-white text-2xl font-bold px-3.5 py-1 rounded-xl shadow-2xl border-2 border-sky-400 flex items-center justify-center min-w-[46px] min-h-[46px]">
+            {isHoldingCapital ? label.toUpperCase() : label}
           </div>
-          <div className="w-2.5 h-2.5 bg-slate-100 rotate-45 -mt-1.5 shadow-sm border-r border-b border-slate-300" />
+          <div className="w-2.5 h-2.5 bg-[#1c202a] rotate-45 -mt-1.5 shadow-sm border-r-2 border-b-2 border-sky-400" />
         </div>
       )}
 
@@ -166,19 +188,21 @@ export const Key: React.FC<KeyProps> = ({
         aria-label={ariaLabel || (typeof label === 'string' ? label : value || 'key')}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        onPointerCancel={handlePointerLeave}
         onPointerLeave={handlePointerLeave}
-        className={`key-tactile w-full h-full rounded-[6px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-all duration-75 shadow-sm ${getThemeClasses()} ${
-          active ? 'ring-1 ring-white/40 scale-[0.97]' : 'active:scale-[0.97]'
-        } ${className}`}
+        className={`key-tactile w-full h-full rounded-[8px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-all duration-75 ${getKeyClasses()} ${className}`}
       >
         {children || (
           <>
-            <span className="text-[17px] sm:text-[18px] md:text-[20px] font-semibold tracking-wide leading-none select-none pointer-events-none">
-              {label}
+            <span
+              className={`text-[18px] sm:text-[20px] md:text-[22px] font-semibold tracking-wide leading-none select-none pointer-events-none ${
+                isHoldingCapital ? 'text-sky-300 font-bold' : ''
+              }`}
+            >
+              {displayLabel}
             </span>
             {subLabel && (
-              <span className="text-[9px] text-slate-400/80 leading-none mt-0.5 select-none pointer-events-none font-medium">
+              <span className="text-[9px] text-slate-400 leading-none mt-0.5 select-none pointer-events-none font-medium">
                 {subLabel}
               </span>
             )}

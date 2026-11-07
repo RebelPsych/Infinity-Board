@@ -130,7 +130,7 @@ export default function App() {
                 Tap the keyboard below or type on your device
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                Standard QWERTY · Tab key · Comma & Period · Swipe left on spacebar (∞) for symbols
+                Numbers 1-0 · Lowercase QWERTY (hold to capitalize) · Tap ∞ for symbols · Comma & Period
               </p>
             </div>
           )}
