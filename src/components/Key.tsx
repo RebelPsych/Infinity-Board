@@ -102,11 +102,9 @@ export const Key: React.FC<KeyProps> = ({
       holdCapitalTimerRef.current = null;
     }
 
-    // If hold-to-capitalize did not trigger, it's a normal tap
     if (!didTriggerHoldRef.current && !onLongPress) {
       onClick();
     } else if (onLongPress && !timerRef.current) {
-      // For backspace, click on tap if not already long-pressing
       onClick();
     }
 
@@ -149,18 +147,18 @@ export const Key: React.FC<KeyProps> = ({
   }, []);
 
   // Simple Keyboard Black and grey with high contrast white lettering
+  // When a key is tapped it appears a lighter shade of grey
   const getKeyClasses = () => {
     if (isSpecial) {
       return active
-        ? 'bg-slate-700 text-white border-slate-500 shadow-md scale-[0.97]'
-        : 'bg-[#181a22] text-slate-200 border-[#2b303e] hover:bg-[#20242e] shadow-sm';
+        ? 'bg-[#4a5266] text-white border-slate-400 shadow-md'
+        : 'bg-[#181a22] text-slate-200 border-[#2b303e] hover:bg-[#20242e] shadow-xs';
     }
     return active
-      ? 'bg-slate-300 text-black border-white font-bold shadow-lg scale-[0.97]'
-      : 'bg-[#252834] text-white border-[#383f50] hover:bg-[#2e3342] shadow-sm';
+      ? 'bg-[#525a70] text-white border-slate-300 font-bold shadow-md'
+      : 'bg-[#242733] text-white border-[#383e50] hover:bg-[#2d3240] shadow-xs';
   };
 
-  // Label display when holding capital
   const displayLabel = isHoldingCapital && typeof label === 'string' ? label.toUpperCase() : label;
 
   return (
@@ -171,12 +169,12 @@ export const Key: React.FC<KeyProps> = ({
         flexBasis: 0,
         minWidth: width || 'auto',
       }}
-      className="relative flex items-center justify-center p-[2.5px] touch-none select-none h-full"
+      className="relative flex items-center justify-center p-[0.75px] touch-none select-none h-full"
     >
       {/* Key Popup bubble when pressed */}
       {settings.showKeyPopup && isPressed && typeof label === 'string' && label.length === 1 && (
-        <div className="absolute -top-12 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
-          <div className="bg-[#1c202a] text-white text-2xl font-bold px-3.5 py-1 rounded-xl shadow-2xl border-2 border-sky-400 flex items-center justify-center min-w-[46px] min-h-[46px]">
+        <div className="absolute -top-14 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
+          <div className="bg-[#1c202a] text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-2xl border-2 border-sky-400 flex items-center justify-center min-w-[50px] min-h-[50px]">
             {isHoldingCapital ? label.toUpperCase() : label}
           </div>
           <div className="w-2.5 h-2.5 bg-[#1c202a] rotate-45 -mt-1.5 shadow-sm border-r-2 border-b-2 border-sky-400" />
@@ -190,19 +188,19 @@ export const Key: React.FC<KeyProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerLeave}
         onPointerLeave={handlePointerLeave}
-        className={`key-tactile w-full h-full rounded-[8px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-all duration-75 ${getKeyClasses()} ${className}`}
+        className={`key-tactile w-full h-full rounded-[6px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-75 ${getKeyClasses()} ${className}`}
       >
         {children || (
           <>
             <span
-              className={`text-[18px] sm:text-[20px] md:text-[22px] font-semibold tracking-wide leading-none select-none pointer-events-none ${
+              className={`text-[20px] sm:text-[22px] md:text-[24px] font-semibold tracking-wide leading-none select-none pointer-events-none ${
                 isHoldingCapital ? 'text-sky-300 font-bold' : ''
               }`}
             >
               {displayLabel}
             </span>
             {subLabel && (
-              <span className="text-[9px] text-slate-400 leading-none mt-0.5 select-none pointer-events-none font-medium">
+              <span className="text-[10px] text-slate-400 leading-none mt-0.5 select-none pointer-events-none font-medium">
                 {subLabel}
               </span>
             )}

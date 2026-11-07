@@ -21,24 +21,41 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
   onSwitchToAlpha,
   settings,
 }) => {
-  // Row 1: tab key > / : " ~ ' ; \ <
-  const row1Symbols = ['>', '/', ':', '"', '~', '\'', ';', '\\', '<'];
+  // Row 1: Number keys (1 2 3 4 5 6 7 8 9 0) moved to symbol keyboard
+  const rowNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
-  // Row 2: * @ [ ♥ = ∞ ] ★ & followed by backspace
-  const row2Symbols = ['*', '@', '[', '♥', '=', '∞', ']', '★', '&'];
+  // Row 2: tab key > / : " ~ ' ; \ <
+  const row2Symbols = ['>', '/', ':', '"', '~', '\'', ';', '\\', '<'];
 
-  // Row 3: $ ( + - # ÷ x ) %
-  const row3Symbols = ['$', '(', '+', '-', '#', '÷', 'x', ')', '%'];
+  // Row 3: * @ [ ♥ = ∞ ] ★ & followed by backspace
+  const row3Symbols = ['*', '@', '[', '♥', '=', '∞', ']', '★', '&'];
+
+  // Row 4: $ ( + - # ÷ x ) %
+  const row4Symbols = ['$', '(', '+', '-', '#', '÷', 'x', ')', '%'];
 
   return (
-    <div className="w-full h-full flex flex-col justify-between select-none p-1 sm:p-1.5 gap-1">
-      {/* Row 1: Tab key followed by > / : " ~ ' ; \ < */}
-      <div className="flex w-full h-[19%] items-stretch justify-center gap-1">
+    <div className="w-full h-full flex flex-col justify-between select-none p-1 gap-1">
+      {/* Row 1: Numbers (1 2 3 4 5 6 7 8 9 0) */}
+      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
+        {rowNumbers.map((num) => (
+          <Key
+            key={num}
+            label={num}
+            value={num}
+            onClick={() => onInsertChar(num)}
+            settings={settings}
+            flexGrow={1}
+          />
+        ))}
+      </div>
+
+      {/* Row 2: Tab key followed by > / : " ~ ' ; \ < */}
+      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
         <Key
           label={
             <div className="flex items-center gap-1">
-              <span className="text-[12px] sm:text-[14px] font-bold tracking-tight text-slate-200">Tab</span>
-              <span className="text-[9px] text-slate-400 font-mono">⇥</span>
+              <span className="text-[13px] sm:text-[15px] font-bold tracking-tight text-slate-200">Tab</span>
+              <span className="text-[10px] text-slate-400 font-mono">⇥</span>
             </div>
           }
           isSpecial
@@ -48,7 +65,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           ariaLabel="Tab key"
         />
 
-        {row1Symbols.map((sym) => (
+        {row2Symbols.map((sym) => (
           <Key
             key={sym}
             label={sym}
@@ -60,9 +77,9 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         ))}
       </div>
 
-      {/* Row 2: * @ [ ♥ = ∞ ] ★ & followed by backspace */}
-      <div className="flex w-full h-[19%] items-stretch justify-center gap-1">
-        {row2Symbols.map((sym) => (
+      {/* Row 3: * @ [ ♥ = ∞ ] ★ & followed by backspace */}
+      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
+        {row3Symbols.map((sym) => (
           <Key
             key={sym}
             label={
@@ -71,7 +88,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
               ) : sym === '★' ? (
                 <span className="text-amber-400 font-bold">{sym}</span>
               ) : sym === '∞' ? (
-                <GradientInfinityIcon size={18} />
+                <GradientInfinityIcon size={20} />
               ) : (
                 sym
               )
@@ -83,7 +100,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           />
         ))}
 
-        {/* Backspace at the end of Row 2 */}
+        {/* Backspace at the end of Row 3 */}
         <Key
           label={<Delete className="w-5 h-5 text-slate-200" />}
           isSpecial
@@ -96,9 +113,9 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         />
       </div>
 
-      {/* Row 3: $ ( + - # ÷ x ) % */}
-      <div className="flex w-full h-[19%] items-stretch justify-center gap-1 px-[2%]">
-        {row3Symbols.map((sym) => (
+      {/* Row 4: $ ( + - # ÷ x ) % */}
+      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5 px-[2%]">
+        {row4Symbols.map((sym) => (
           <Key
             key={sym}
             label={sym}
@@ -110,19 +127,19 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         ))}
       </div>
 
-      {/* Row 4: ABC key (where infinity key was on main keyboard), Comma, Space, Period, Enter */}
-      <div className="flex w-full h-[22%] items-stretch justify-center gap-1">
+      {/* Row 5: ABC key, Comma, Space, Period, Enter */}
+      <div className="flex w-full h-[22%] items-stretch justify-center gap-0.5">
         {/* ABC Key to switch back to Main Keyboard */}
         <Key
           label={
             <div className="flex items-center gap-1 font-bold text-sky-400">
-              <span className="text-[14px] sm:text-[16px] font-black tracking-wide">ABC</span>
+              <span className="text-[15px] sm:text-[17px] font-black tracking-wide">ABC</span>
             </div>
           }
           isSpecial
           onClick={onSwitchToAlpha}
           settings={settings}
-          flexGrow={1.5}
+          flexGrow={1.4}
           ariaLabel="Switch to ABC Keyboard"
           className="border-sky-500/40 bg-sky-950/40 hover:bg-sky-900/60"
         />
@@ -136,11 +153,11 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           flexGrow={1.1}
         />
 
-        {/* Spacebar (clean, no word "space") */}
+        {/* Spacebar */}
         <Key
           label={
             <div className="w-full flex items-center justify-center text-slate-400">
-              <div className="w-20 sm:w-28 h-1 rounded-full bg-slate-500/50" />
+              <div className="w-28 sm:w-44 h-1 rounded-full bg-slate-500/50" />
             </div>
           }
           onClick={() => onInsertChar(' ')}
@@ -161,7 +178,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
 
         {/* Enter Key */}
         <Key
-          label={<CornerDownLeft className="w-5 h-5 text-sky-400" />}
+          label={<CornerDownLeft className="w-6 h-6 text-sky-400" />}
           isSpecial
           onClick={onEnter}
           settings={settings}
