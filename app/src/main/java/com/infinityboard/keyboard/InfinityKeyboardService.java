@@ -16,6 +16,8 @@ public class InfinityKeyboardService extends InputMethodService {
 
     private boolean isSymbols = false;
     private boolean isShifted = false;
+    private boolean isCapsLock = false;
+    private long lastShiftTapTime = 0;
     private LinearLayout keyboardContainer;
 
     @Override
@@ -59,6 +61,7 @@ public class InfinityKeyboardService extends InputMethodService {
         keyboardContainer.addView(createRowLayout(row1, true));
 
         // Row 3: asdfghjkl ? (swapped with backspace)
+        boolean showUpper = isShifted || isCapsLock;
         String[] row2Letters = {"a", "s", "d", "f", "g", "h", "j", "k", "l"};
         LinearLayout row2Layout = new LinearLayout(this);
         row2Layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -69,12 +72,8 @@ public class InfinityKeyboardService extends InputMethodService {
 
         for (String letter : row2Letters) {
             final String l = letter;
-            Button btn = createKeyButton(isShifted ? l.toUpperCase() : l.toLowerCase(), false);
+            Button btn = createKeyButton(showUpper ? l.toUpperCase() : l.toLowerCase(), false);
             btn.setOnClickListener(v -> handleLetterPress(l));
-            btn.setOnLongClickListener(v -> {
-                commitText(l.toUpperCase());
-                return true;
-            });
             row2Layout.addView(btn);
         }
 
@@ -85,7 +84,7 @@ public class InfinityKeyboardService extends InputMethodService {
         row2Layout.addView(questionBtn);
         keyboardContainer.addView(row2Layout);
 
-        // Row 3: ⇧ Shift key (replaces :), !, z x c v b n m, ⌫ Backspace (swapped with ?)
+        // Row 4: ⇧ Shift key (replaces :), !, z x c v b n m, ⌫ Backspace (swapped with ?)
         LinearLayout row3Layout = new LinearLayout(this);
         row3Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row3Params = new LinearLayout.LayoutParams(
@@ -95,12 +94,26 @@ public class InfinityKeyboardService extends InputMethodService {
 
         // Shift Key
         Button shiftBtn = createKeyButton("⇧", true);
-        if (isShifted) {
+        if (showUpper) {
             shiftBtn.setBackgroundColor(Color.parseColor("#1C2433"));
             shiftBtn.setTextColor(Color.parseColor("#38BDF8"));
         }
         shiftBtn.setOnClickListener(v -> {
-            isShifted = !isShifted;
+            long now = System.currentTimeMillis();
+            boolean isDoubleTap = (now - lastShiftTapTime) < 320;
+            lastShiftTapTime = now;
+
+            if (isDoubleTap) {
+                isCapsLock = !isCapsLock;
+                isShifted = isCapsLock;
+            } else {
+                if (isCapsLock) {
+                    isCapsLock = false;
+                    isShifted = false;
+                } else {
+                    isShifted = !isShifted;
+                }
+            }
             renderKeyboard();
         });
         row3Layout.addView(shiftBtn);
@@ -115,12 +128,8 @@ public class InfinityKeyboardService extends InputMethodService {
         String[] row3Letters = {"z", "x", "c", "v", "b", "n", "m"};
         for (String item : row3Letters) {
             final String it = item;
-            Button btn = createKeyButton(isShifted ? it.toUpperCase() : it.toLowerCase(), false);
+            Button btn = createKeyButton(showUpper ? it.toUpperCase() : it.toLowerCase(), false);
             btn.setOnClickListener(v -> handleLetterPress(it));
-            btn.setOnLongClickListener(v -> {
-                commitText(it.toUpperCase());
-                return true;
-            });
             row3Layout.addView(btn);
         }
 
@@ -324,27 +333,24 @@ public class InfinityKeyboardService extends InputMethodService {
         params.setMargins(0, 1, 0, 1);
         row.setLayoutParams(params);
 
+        boolean showUpper = isAlpha && (isShifted || isCapsLock);
         for (String k : keys) {
             final String text = k;
-            Button btn = createKeyButton(isAlpha && isShifted ? text.toUpperCase() : text.toLowerCase(), false);
+            String display = isAlpha ? (showUpper ? text.toUpperCase() : text.toLowerCase()) : text;
+            Button btn = createKeyButton(display, false);
             btn.setOnClickListener(v -> {
                 if (isAlpha) handleLetterPress(text);
                 else commitText(text);
             });
-            if (isAlpha) {
-                btn.setOnLongClickListener(v -> {
-                    commitText(text.toUpperCase());
-                    return true;
-                });
-            }
             row.addView(btn);
         }
         return row;
     }
 
     private void handleLetterPress(String letter) {
-        commitText(isShifted ? letter.toUpperCase() : letter.toLowerCase());
-        if (isShifted) {
+        boolean shouldUpper = isShifted || isCapsLock;
+        commitText(shouldUpper ? letter.toUpperCase() : letter.toLowerCase());
+        if (isShifted && !isCapsLock) {
             isShifted = false;
             renderKeyboard();
         }
@@ -352,6 +358,8 @@ public class InfinityKeyboardService extends InputMethodService {
 
     private Button createKeyButton(String text, boolean isSpecial) {
         Button btn = new Button(this);
+        btn.setAllCaps(false);
+        btn.setTransformationMethod(null);
         btn.setText(text);
         btn.setTextColor(Color.WHITE);
         btn.setTextSize(20);

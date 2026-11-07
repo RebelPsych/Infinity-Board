@@ -16,11 +16,12 @@
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: transform 0.06s ease, background-color 0.1s ease, box-shadow 0.08s ease;
+  will-change: transform, background-color;
+  transition: transform 0.04s ease, background-color 0.04s ease;
 }
 
 .key-tactile:active {
-  transform: translateY(1.5px) scale(0.97);
+  transform: translateY(1px) scale(0.98);
 }
 
 /* Custom scrollbars */

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import { triggerHaptic } from '../utils/haptics';
 import { soundManager } from '../utils/audio';
 import { KeyboardSettings } from '../types/keyboard';
@@ -15,8 +15,6 @@ interface KeyProps {
   width?: string;
   onClick: () => void;
   onLongPress?: () => void;
-  onHoldCapitalize?: (upperChar: string) => void;
-  canCapitalize?: boolean;
   settings: KeyboardSettings;
   soundType?: 'mechanical' | 'soft-click' | 'typewriter' | 'bubble';
   specialType?: 'enter' | 'delete' | 'space';
@@ -24,7 +22,7 @@ interface KeyProps {
   children?: React.ReactNode;
 }
 
-export const Key: React.FC<KeyProps> = ({
+export const Key: React.FC<KeyProps> = memo(({
   label,
   value,
   subLabel,
@@ -36,27 +34,23 @@ export const Key: React.FC<KeyProps> = ({
   width,
   onClick,
   onLongPress,
-  onHoldCapitalize,
-  canCapitalize = false,
   settings,
   specialType,
   ariaLabel,
   children,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const [isHoldingCapital, setIsHoldingCapital] = useState(false);
   const timerRef = useRef<number | null>(null);
   const repeatTimerRef = useRef<number | null>(null);
-  const holdCapitalTimerRef = useRef<number | null>(null);
-  const didTriggerHoldRef = useRef(false);
 
   const active = isPressed || isPhysicalActive || isActive;
 
+  // Ultra-fast tap: trigger insertion immediately on pointerdown (0ms input latency)
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     setIsPressed(true);
-    didTriggerHoldRef.current = false;
 
+    // Audio & haptic feedback
     if (settings.soundEnabled) {
       if (specialType) {
         soundManager.playSpecialClick(specialType);
@@ -64,24 +58,12 @@ export const Key: React.FC<KeyProps> = ({
         soundManager.playKeyClick(settings.soundType, settings.soundVolume);
       }
     }
-
     triggerHaptic(isSpecial ? 'medium' : 'light', settings.hapticsEnabled);
 
-    // If this is a letter key that can be held down to capitalize
-    if (canCapitalize && typeof label === 'string' && label.length === 1 && onHoldCapitalize) {
-      const upper = label.toUpperCase();
-      holdCapitalTimerRef.current = window.setTimeout(() => {
-        didTriggerHoldRef.current = true;
-        setIsHoldingCapital(true);
-        triggerHaptic('medium', settings.hapticsEnabled);
-        if (settings.soundEnabled) {
-          soundManager.playKeyClick('mechanical', settings.soundVolume);
-        }
-        onHoldCapitalize(upper);
-      }, 280);
-    }
+    // Instant input execution
+    onClick();
 
-    // Long press repeat for backspace / delete
+    // Fast repeat for delete/backspace if held down
     if (onLongPress) {
       timerRef.current = window.setTimeout(() => {
         onLongPress();
@@ -91,26 +73,13 @@ export const Key: React.FC<KeyProps> = ({
             soundManager.playSpecialClick('delete');
           }
           triggerHaptic('light', settings.hapticsEnabled);
-        }, 65);
-      }, 350);
+        }, 50);
+      }, 260);
     }
   };
 
   const handlePointerUp = () => {
-    if (holdCapitalTimerRef.current) {
-      clearTimeout(holdCapitalTimerRef.current);
-      holdCapitalTimerRef.current = null;
-    }
-
-    if (!didTriggerHoldRef.current && !onLongPress) {
-      onClick();
-    } else if (onLongPress && !timerRef.current) {
-      onClick();
-    }
-
     setIsPressed(false);
-    setIsHoldingCapital(false);
-
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -122,12 +91,7 @@ export const Key: React.FC<KeyProps> = ({
   };
 
   const handlePointerLeave = () => {
-    if (holdCapitalTimerRef.current) {
-      clearTimeout(holdCapitalTimerRef.current);
-      holdCapitalTimerRef.current = null;
-    }
     setIsPressed(false);
-    setIsHoldingCapital(false);
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -142,24 +106,21 @@ export const Key: React.FC<KeyProps> = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (repeatTimerRef.current) clearInterval(repeatTimerRef.current);
-      if (holdCapitalTimerRef.current) clearTimeout(holdCapitalTimerRef.current);
     };
   }, []);
 
   // Simple Keyboard Black and grey with high contrast white lettering
-  // When a key is tapped it appears a lighter shade of grey
+  // When a key is tapped it appears an instant lighter shade of grey
   const getKeyClasses = () => {
     if (isSpecial) {
       return active
         ? 'bg-[#3a3f4e] text-white border-[#555d72] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.4)]'
-        : 'bg-[#15171d] text-slate-200 border-[#232732] hover:bg-[#1a1c24] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]';
+        : 'bg-[#15171D] text-slate-200 border-[#232732] hover:bg-[#1a1c24] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]';
     }
     return active
       ? 'bg-[#484f63] text-white border-[#626b84] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.4)]'
-      : 'bg-[#20222a] text-white border-[#2c303c] hover:bg-[#252832] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]';
+      : 'bg-[#20222A] text-white border-[#2c303c] hover:bg-[#252832] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]';
   };
-
-  const displayLabel = isHoldingCapital && typeof label === 'string' ? label.toUpperCase() : label;
 
   return (
     <div
@@ -171,11 +132,11 @@ export const Key: React.FC<KeyProps> = ({
       }}
       className="relative flex items-center justify-center p-[1px] touch-none select-none h-full"
     >
-      {/* Key Popup bubble when pressed */}
+      {/* Key Popup preview bubble on tap */}
       {settings.showKeyPopup && isPressed && typeof label === 'string' && label.length === 1 && (
-        <div className="absolute -top-14 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
+        <div className="absolute -top-14 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-50">
           <div className="bg-[#2a2e3a] text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.7)] border border-white/10 flex items-center justify-center min-w-[50px] min-h-[50px]">
-            {isHoldingCapital ? label.toUpperCase() : label}
+            {label}
           </div>
           <div className="w-2.5 h-2.5 bg-[#2a2e3a] rotate-45 -mt-1.5 shadow-sm border-r border-b border-white/10" />
         </div>
@@ -188,16 +149,12 @@ export const Key: React.FC<KeyProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerLeave}
         onPointerLeave={handlePointerLeave}
-        className={`key-tactile w-full h-full rounded-[7px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-75 ${getKeyClasses()} ${className}`}
+        className={`key-tactile w-full h-full rounded-[7px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-50 ${getKeyClasses()} ${className}`}
       >
         {children || (
           <>
-            <span
-              className={`text-[19px] sm:text-[21px] md:text-[23px] font-semibold tracking-normal leading-none select-none pointer-events-none ${
-                isHoldingCapital ? 'text-sky-300 font-bold' : 'text-white'
-              }`}
-            >
-              {displayLabel}
+            <span className="text-[19px] sm:text-[21px] md:text-[23px] font-semibold tracking-normal normal-case leading-none select-none pointer-events-none text-white">
+              {label}
             </span>
             {subLabel && (
               <span className="text-[10px] text-slate-400 leading-none mt-0.5 select-none pointer-events-none font-medium">
@@ -209,4 +166,6 @@ export const Key: React.FC<KeyProps> = ({
       </button>
     </div>
   );
-};
+});
+
+Key.displayName = 'Key';

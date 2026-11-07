@@ -64,11 +64,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
     }
   };
 
-  // Hold down key to capitalize
-  const handleHoldCapitalize = (upperLetter: string) => {
-    onInsertChar(upperLetter);
-  };
-
   const isUppercase = shiftState !== 'off';
 
   return (
@@ -115,8 +110,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                   label={displayChar}
                   value={displayChar}
                   onClick={() => handleLetterTap(letter)}
-                  onHoldCapitalize={() => handleHoldCapitalize(letter.toUpperCase())}
-                  canCapitalize
                   settings={settings}
                   isPhysicalActive={isPhysicallyPressed}
                   flexGrow={1}
@@ -138,8 +131,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                   label={displayChar}
                   value={displayChar}
                   onClick={() => handleLetterTap(letter)}
-                  onHoldCapitalize={() => handleHoldCapitalize(letter.toUpperCase())}
-                  canCapitalize
                   settings={settings}
                   isPhysicalActive={isPhysicallyPressed}
                   flexGrow={1}
@@ -207,8 +198,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                   label={displayChar}
                   value={displayChar}
                   onClick={() => handleLetterTap(letter)}
-                  onHoldCapitalize={() => handleHoldCapitalize(letter.toUpperCase())}
-                  canCapitalize
                   settings={settings}
                   isPhysicalActive={isPhysicallyPressed}
                   flexGrow={1}

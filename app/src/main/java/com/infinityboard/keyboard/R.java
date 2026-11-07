@@ -17,6 +17,7 @@ public final class R {
         public static final int subtype_en_us=0x7f030001;
     }
     public static final class style {
+        public static final int KeyboardButtonStyle=0x7f040001;
         public static final int Theme_InfinityBoard=0x7f040000;
     }
     public static final class xml {

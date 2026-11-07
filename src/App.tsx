@@ -104,7 +104,7 @@ export default function App() {
 
         {/* Zone 2: Concise Unboxed Helper Text */}
         <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <span>Hold letter to capitalize</span>
+          <span>Instant tap to type</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
           <span>Tap ∞ for symbols</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
@@ -178,7 +178,7 @@ export default function App() {
                     Type on the keyboard below to test...
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Numbers 1-0 on top · Hold letter to capitalize · Tap ∞ for symbols
+                    Super-fast typing · Numbers 1-0 on top · Tap ∞ for symbols
                   </p>
                 </div>
               )}
