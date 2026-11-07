@@ -34,7 +34,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
   const row4Symbols = ['$', '(', '+', '-', '#', '÷', 'x', ')', '%'];
 
   return (
-    <div className="w-full h-full flex flex-col justify-between select-none p-1 gap-1">
+    <div className="w-full h-full flex flex-col justify-between select-none p-0.5 gap-1">
       {/* Row 1: Numbers (1 2 3 4 5 6 7 8 9 0) */}
       <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
         {rowNumbers.map((num) => (
@@ -54,7 +54,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         <Key
           label={
             <div className="flex items-center gap-1">
-              <span className="text-[13px] sm:text-[15px] font-bold tracking-tight text-slate-200">Tab</span>
+              <span className="text-[12px] sm:text-[14px] font-bold tracking-tight text-slate-200">Tab</span>
               <span className="text-[10px] text-slate-400 font-mono">⇥</span>
             </div>
           }
@@ -84,11 +84,11 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
             key={sym}
             label={
               sym === '♥' ? (
-                <span className="text-rose-500 font-bold">{sym}</span>
+                <span className="text-rose-400 font-bold">{sym}</span>
               ) : sym === '★' ? (
-                <span className="text-amber-400 font-bold">{sym}</span>
+                <span className="text-amber-300 font-bold">{sym}</span>
               ) : sym === '∞' ? (
-                <GradientInfinityIcon size={20} />
+                <GradientInfinityIcon size={19} />
               ) : (
                 sym
               )
@@ -114,7 +114,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
       </div>
 
       {/* Row 4: $ ( + - # ÷ x ) % */}
-      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5 px-[2%]">
+      <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5 px-[1.5%]">
         {row4Symbols.map((sym) => (
           <Key
             key={sym}
@@ -133,7 +133,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         <Key
           label={
             <div className="flex items-center gap-1 font-bold text-sky-400">
-              <span className="text-[15px] sm:text-[17px] font-black tracking-wide">ABC</span>
+              <span className="text-[14px] sm:text-[16px] font-black tracking-wider">ABC</span>
             </div>
           }
           isSpecial
@@ -141,7 +141,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           settings={settings}
           flexGrow={1.4}
           ariaLabel="Switch to ABC Keyboard"
-          className="border-sky-500/40 bg-sky-950/40 hover:bg-sky-900/60"
+          className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
         />
 
         {/* Comma (,) */}
@@ -156,8 +156,8 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         {/* Spacebar */}
         <Key
           label={
-            <div className="w-full flex items-center justify-center text-slate-400">
-              <div className="w-28 sm:w-44 h-1 rounded-full bg-slate-500/50" />
+            <div className="w-full flex items-center justify-center">
+              <div className="w-24 sm:w-36 h-1 rounded-full bg-white/20" />
             </div>
           }
           onClick={() => onInsertChar(' ')}
@@ -185,7 +185,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           specialType="enter"
           flexGrow={1.5}
           ariaLabel="Enter"
-          className="border-sky-500/40 bg-sky-950/40 hover:bg-sky-900/60"
+          className="border-sky-500/25 bg-[#141824] hover:bg-[#1c2233]"
         />
       </div>
     </div>

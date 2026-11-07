@@ -29,13 +29,16 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   const [shiftState, setShiftState] = useState<ShiftState>('off');
   const lastShiftTapRef = useRef<number>(0);
 
-  // Row 1: qwertyuiop (10 keys)
+  // Row 1: Numbers 1 2 3 4 5 6 7 8 9 0
+  const rowNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+  // Row 2: qwertyuiop (10 keys)
   const row1Letters = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'];
 
-  // Row 2: asdfghjkl ? (10 keys: 9 letters + ? swapped from row 3)
+  // Row 3: asdfghjkl ? (10 keys: 9 letters + ? swapped from row 3)
   const row2Letters = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'];
 
-  // Row 3: ⇧ ! z x c v b n m ⌫
+  // Row 4: ⇧ ! z x c v b n m ⌫
   // Starts with Shift (replaced :), then !, then 7 letters, ends with Backspace (swapped from row 2)
   const row3MiddleLetters = ['z', 'x', 'c', 'v', 'b', 'n', 'm'];
 
@@ -69,7 +72,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   const isUppercase = shiftState !== 'off';
 
   return (
-    <div className="w-full h-[46vh] min-h-[350px] max-h-[460px] bg-[#090b10] border-t border-slate-800/80 shadow-2xl flex flex-col justify-between p-1 select-none relative z-30 transition-all duration-150">
+    <div className="w-full h-[46vh] min-h-[350px] max-h-[460px] bg-[#0d0f14] border-t border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] flex flex-col justify-between p-1.5 select-none relative z-30 transition-all duration-150">
       {mode === 'symbols' ? (
         <SymbolsLayout
           onInsertChar={onInsertChar}
@@ -81,8 +84,26 @@ export const Keyboard: React.FC<KeyboardProps> = ({
         />
       ) : (
         <div className="w-full h-full flex flex-col justify-between gap-1 p-0.5">
-          {/* Row 1: qwertyuiop */}
-          <div className="flex w-full h-[24%] items-stretch justify-center gap-0.5">
+          {/* Top Row: Numbers 1 2 3 4 5 6 7 8 9 0 */}
+          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
+            {rowNumbers.map((num) => {
+              const isPhysicallyPressed = activePhysicalKey === num;
+              return (
+                <Key
+                  key={num}
+                  label={num}
+                  value={num}
+                  onClick={() => onInsertChar(num)}
+                  settings={settings}
+                  isPhysicalActive={isPhysicallyPressed}
+                  flexGrow={1}
+                />
+              );
+            })}
+          </div>
+
+          {/* Row 2: qwertyuiop */}
+          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
             {row1Letters.map((letter) => {
               const displayChar = isUppercase ? letter.toUpperCase() : letter.toLowerCase();
               const isPhysicallyPressed =
@@ -104,8 +125,8 @@ export const Keyboard: React.FC<KeyboardProps> = ({
             })}
           </div>
 
-          {/* Row 2: asdfghjkl followed by ? key (swapped with backspace) */}
-          <div className="flex w-full h-[24%] items-stretch justify-center gap-0.5">
+          {/* Row 3: asdfghjkl followed by ? key (swapped with backspace) */}
+          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
             {row2Letters.map((letter) => {
               const displayChar = isUppercase ? letter.toUpperCase() : letter.toLowerCase();
               const isPhysicallyPressed =
@@ -133,12 +154,11 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               onClick={() => onInsertChar('?')}
               settings={settings}
               flexGrow={1.1}
-              className="text-sky-300 font-bold"
             />
           </div>
 
-          {/* Row 3: ⇧ Shift key (replaced :), !, z x c v b n m, ⌫ Backspace (swapped with ?) */}
-          <div className="flex w-full h-[24%] items-stretch justify-center gap-0.5">
+          {/* Row 4: ⇧ Shift key (replaced :), !, z x c v b n m, ⌫ Backspace (swapped with ?) */}
+          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
             {/* Shift Key with Standard Function */}
             <Key
               label={
@@ -146,8 +166,8 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                   <ArrowBigUp
                     className={`w-6 h-6 transition-all duration-100 ${
                       shiftState !== 'off'
-                        ? 'fill-sky-400 text-sky-400 scale-110'
-                        : 'text-slate-300'
+                        ? 'fill-sky-400 text-sky-400 scale-105'
+                        : 'text-slate-200'
                     }`}
                   />
                   {shiftState === 'caps' && (
@@ -163,7 +183,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               settings={settings}
               flexGrow={1.3}
               ariaLabel="Shift / Caps Lock"
-              className={shiftState !== 'off' ? 'border-sky-400/80 bg-sky-950/40 text-sky-300' : ''}
+              className={shiftState !== 'off' ? 'border-sky-500/50 bg-[#1c2433] text-sky-300' : ''}
             />
 
             {/* ! Key */}
@@ -173,7 +193,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               onClick={() => onInsertChar('!')}
               settings={settings}
               flexGrow={1}
-              className="text-sky-300 font-bold"
             />
 
             {/* z x c v b n m */}
@@ -210,13 +229,13 @@ export const Keyboard: React.FC<KeyboardProps> = ({
             />
           </div>
 
-          {/* Row 4 (Bottom Row): Infinity Key, comma, space, period, Enter key */}
-          <div className="flex w-full h-[26%] items-stretch justify-center gap-0.5">
-            {/* Infinity Key (NO numbers 123 - just the clean gradient infinity icon) */}
+          {/* Row 5 (Bottom Row): Infinity Key, comma, space, period, Enter key */}
+          <div className="flex w-full h-[22%] items-stretch justify-center gap-0.5">
+            {/* Infinity Key (NO numbers 123 - clean blue-to-pink gradient infinity icon) */}
             <Key
               label={
                 <div className="flex items-center justify-center">
-                  <GradientInfinityIcon size={26} />
+                  <GradientInfinityIcon size={25} />
                 </div>
               }
               isSpecial
@@ -224,7 +243,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               settings={settings}
               flexGrow={1.4}
               ariaLabel="Switch to Symbol Board"
-              className="border-purple-500/40 bg-purple-950/20 hover:bg-purple-900/40"
+              className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
             />
 
             {/* Comma (,) */}
@@ -236,11 +255,11 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               flexGrow={1.1}
             />
 
-            {/* Spacebar (clean, no word 'space') */}
+            {/* Spacebar (clean, tactile look) */}
             <Key
               label={
-                <div className="w-full flex items-center justify-center text-slate-400">
-                  <div className="w-28 sm:w-44 h-1 rounded-full bg-slate-500/50" />
+                <div className="w-full flex items-center justify-center">
+                  <div className="w-24 sm:w-36 h-1 rounded-full bg-white/20" />
                 </div>
               }
               onClick={() => onInsertChar(' ')}
@@ -268,7 +287,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               specialType="enter"
               flexGrow={1.5}
               ariaLabel="Enter / Return"
-              className="border-sky-500/40 bg-sky-950/40 hover:bg-sky-900/60"
+              className="border-sky-500/25 bg-[#141824] hover:bg-[#1c2233]"
             />
           </div>
         </div>

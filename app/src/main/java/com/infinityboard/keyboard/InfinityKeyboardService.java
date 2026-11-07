@@ -22,7 +22,7 @@ public class InfinityKeyboardService extends InputMethodService {
     public View onCreateInputView() {
         keyboardContainer = new LinearLayout(this);
         keyboardContainer.setOrientation(LinearLayout.VERTICAL);
-        keyboardContainer.setBackgroundColor(Color.parseColor("#090B10"));
+        keyboardContainer.setBackgroundColor(Color.parseColor("#0D0F14"));
         keyboardContainer.setPadding(2, 6, 2, 8);
 
         int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.46f);
@@ -45,11 +45,15 @@ public class InfinityKeyboardService extends InputMethodService {
     }
 
     private void renderMainKeyboard() {
-        // Row 1: qwertyuiop (lowercase by default, hold to capitalize)
+        // Top Row: Numbers (1 2 3 4 5 6 7 8 9 0)
+        String[] rowNumbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+        keyboardContainer.addView(createRowLayout(rowNumbers, false));
+
+        // Row 2: qwertyuiop (lowercase by default, hold to capitalize)
         String[] row1 = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"};
         keyboardContainer.addView(createRowLayout(row1, true));
 
-        // Row 2: asdfghjkl ? (swapped with backspace)
+        // Row 3: asdfghjkl ? (swapped with backspace)
         String[] row2Letters = {"a", "s", "d", "f", "g", "h", "j", "k", "l"};
         LinearLayout row2Layout = new LinearLayout(this);
         row2Layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -71,7 +75,7 @@ public class InfinityKeyboardService extends InputMethodService {
 
         // ? Key at end of Row 2
         Button questionBtn = createKeyButton("?", false);
-        questionBtn.setTextColor(Color.parseColor("#38BDF8"));
+        questionBtn.setTextColor(Color.WHITE);
         questionBtn.setOnClickListener(v -> commitText("?"));
         row2Layout.addView(questionBtn);
         keyboardContainer.addView(row2Layout);
@@ -87,7 +91,7 @@ public class InfinityKeyboardService extends InputMethodService {
         // Shift Key
         Button shiftBtn = createKeyButton("⇧", true);
         if (isShifted) {
-            shiftBtn.setBackgroundColor(Color.parseColor("#0369A1"));
+            shiftBtn.setBackgroundColor(Color.parseColor("#1C2433"));
             shiftBtn.setTextColor(Color.parseColor("#38BDF8"));
         }
         shiftBtn.setOnClickListener(v -> {
@@ -98,7 +102,7 @@ public class InfinityKeyboardService extends InputMethodService {
 
         // ! Key
         Button exclamBtn = createKeyButton("!", false);
-        exclamBtn.setTextColor(Color.parseColor("#38BDF8"));
+        exclamBtn.setTextColor(Color.WHITE);
         exclamBtn.setOnClickListener(v -> commitText("!"));
         row3Layout.addView(exclamBtn);
 
@@ -134,7 +138,7 @@ public class InfinityKeyboardService extends InputMethodService {
 
         // Clean Infinity Key (NO 123)
         Button infinityBtn = createKeyButton("∞", true);
-        infinityBtn.setTextColor(Color.parseColor("#38BDF8"));
+        infinityBtn.setTextColor(Color.parseColor("#C084FC"));
         LinearLayout.LayoutParams infParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.4f);
         infParams.setMargins(1, 0, 1, 0);
         infinityBtn.setLayoutParams(infParams);
@@ -172,7 +176,7 @@ public class InfinityKeyboardService extends InputMethodService {
         // Enter
         Button enterBtn = createKeyButton("↵", true);
         enterBtn.setTextColor(Color.parseColor("#38BDF8"));
-        enterBtn.setBackgroundColor(Color.parseColor("#0C4A6E"));
+        enterBtn.setBackgroundColor(Color.parseColor("#141824"));
         LinearLayout.LayoutParams enterP = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f);
         enterP.setMargins(1, 0, 1, 0);
         enterBtn.setLayoutParams(enterP);
@@ -297,7 +301,7 @@ public class InfinityKeyboardService extends InputMethodService {
 
         Button enterBtn = createKeyButton("↵", true);
         enterBtn.setTextColor(Color.parseColor("#38BDF8"));
-        enterBtn.setBackgroundColor(Color.parseColor("#0C4A6E"));
+        enterBtn.setBackgroundColor(Color.parseColor("#141824"));
         LinearLayout.LayoutParams enterP = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f);
         enterP.setMargins(1, 0, 1, 0);
         enterBtn.setLayoutParams(enterP);
@@ -347,7 +351,7 @@ public class InfinityKeyboardService extends InputMethodService {
         btn.setTextColor(Color.WHITE);
         btn.setTextSize(20);
         btn.setTypeface(Typeface.DEFAULT_BOLD);
-        btn.setBackgroundColor(isSpecial ? Color.parseColor("#181A22") : Color.parseColor("#242733"));
+        btn.setBackgroundColor(isSpecial ? Color.parseColor("#15171D") : Color.parseColor("#20222A"));
         btn.setPadding(0, 0, 0, 0);
 
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);

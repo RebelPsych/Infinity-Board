@@ -151,12 +151,12 @@ export const Key: React.FC<KeyProps> = ({
   const getKeyClasses = () => {
     if (isSpecial) {
       return active
-        ? 'bg-[#4a5266] text-white border-slate-400 shadow-md'
-        : 'bg-[#181a22] text-slate-200 border-[#2b303e] hover:bg-[#20242e] shadow-xs';
+        ? 'bg-[#3a3f4e] text-white border-[#555d72] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.4)]'
+        : 'bg-[#15171d] text-slate-200 border-[#232732] hover:bg-[#1a1c24] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]';
     }
     return active
-      ? 'bg-[#525a70] text-white border-slate-300 font-bold shadow-md'
-      : 'bg-[#242733] text-white border-[#383e50] hover:bg-[#2d3240] shadow-xs';
+      ? 'bg-[#484f63] text-white border-[#626b84] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.4)]'
+      : 'bg-[#20222a] text-white border-[#2c303c] hover:bg-[#252832] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]';
   };
 
   const displayLabel = isHoldingCapital && typeof label === 'string' ? label.toUpperCase() : label;
@@ -169,15 +169,15 @@ export const Key: React.FC<KeyProps> = ({
         flexBasis: 0,
         minWidth: width || 'auto',
       }}
-      className="relative flex items-center justify-center p-[0.75px] touch-none select-none h-full"
+      className="relative flex items-center justify-center p-[1px] touch-none select-none h-full"
     >
       {/* Key Popup bubble when pressed */}
       {settings.showKeyPopup && isPressed && typeof label === 'string' && label.length === 1 && (
         <div className="absolute -top-14 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in zoom-in-95 duration-75">
-          <div className="bg-[#1c202a] text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-2xl border-2 border-sky-400 flex items-center justify-center min-w-[50px] min-h-[50px]">
+          <div className="bg-[#2a2e3a] text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.7)] border border-white/10 flex items-center justify-center min-w-[50px] min-h-[50px]">
             {isHoldingCapital ? label.toUpperCase() : label}
           </div>
-          <div className="w-2.5 h-2.5 bg-[#1c202a] rotate-45 -mt-1.5 shadow-sm border-r-2 border-b-2 border-sky-400" />
+          <div className="w-2.5 h-2.5 bg-[#2a2e3a] rotate-45 -mt-1.5 shadow-sm border-r border-b border-white/10" />
         </div>
       )}
 
@@ -188,13 +188,13 @@ export const Key: React.FC<KeyProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerLeave}
         onPointerLeave={handlePointerLeave}
-        className={`key-tactile w-full h-full rounded-[6px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-75 ${getKeyClasses()} ${className}`}
+        className={`key-tactile w-full h-full rounded-[7px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-75 ${getKeyClasses()} ${className}`}
       >
         {children || (
           <>
             <span
-              className={`text-[20px] sm:text-[22px] md:text-[24px] font-semibold tracking-wide leading-none select-none pointer-events-none ${
-                isHoldingCapital ? 'text-sky-300 font-bold' : ''
+              className={`text-[19px] sm:text-[21px] md:text-[23px] font-semibold tracking-normal leading-none select-none pointer-events-none ${
+                isHoldingCapital ? 'text-sky-300 font-bold' : 'text-white'
               }`}
             >
               {displayLabel}
