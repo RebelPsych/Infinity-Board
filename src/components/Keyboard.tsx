@@ -118,8 +118,8 @@ export const Keyboard: React.FC<KeyboardProps> = ({
             })}
           </div>
 
-          {/* Row 3: asdfghjkl followed by ? key (swapped with backspace) */}
-          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
+          {/* Row 3: asdfghjkl (9 letters) */}
+          <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5 px-[2%]">
             {row2Letters.map((letter) => {
               const displayChar = isUppercase ? letter.toUpperCase() : letter.toLowerCase();
               const isPhysicallyPressed =
@@ -137,18 +137,9 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                 />
               );
             })}
-
-            {/* ? Key at the end of Row 2 */}
-            <Key
-              label="?"
-              value="?"
-              onClick={() => onInsertChar('?')}
-              settings={settings}
-              flexGrow={1.1}
-            />
           </div>
 
-          {/* Row 4: ⇧ Shift key (replaced :), !, z x c v b n m, ⌫ Backspace (swapped with ?) */}
+          {/* Row 4: ⇧ Shift key, z x c v b n m, ⌫ Backspace */}
           <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5">
             {/* Shift Key with Standard Function */}
             <Key
@@ -172,18 +163,9 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               isActive={shiftState !== 'off'}
               onClick={handleShiftClick}
               settings={settings}
-              flexGrow={1.3}
+              flexGrow={1.4}
               ariaLabel="Shift / Caps Lock"
               className={shiftState !== 'off' ? 'border-sky-500/50 bg-[#1c2433] text-sky-300' : ''}
-            />
-
-            {/* ! Key */}
-            <Key
-              label="!"
-              value="!"
-              onClick={() => onInsertChar('!')}
-              settings={settings}
-              flexGrow={1}
             />
 
             {/* z x c v b n m */}
@@ -205,7 +187,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               );
             })}
 
-            {/* Backspace Key at the end of Row 3 */}
+            {/* Backspace Key at the end of Row 4 */}
             <Key
               label={<Delete className="w-5 h-5 text-slate-200" />}
               isSpecial
@@ -218,7 +200,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
             />
           </div>
 
-          {/* Row 5 (Bottom Row): Infinity Key, comma, space, period, Enter key */}
+          {/* Row 5 (Bottom Row): Infinity Key, comma (hold for ?), space, period (hold for !), Enter key */}
           <div className="flex w-full h-[22%] items-stretch justify-center gap-0.5">
             {/* Infinity Key (NO numbers 123 - clean blue-to-pink gradient infinity icon) */}
             <Key
@@ -235,13 +217,17 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
             />
 
-            {/* Comma (,) */}
+            {/* Comma (,) - Hold for (?) */}
             <Key
               label=","
               value=","
+              subLabel="?"
+              longPressChar="?"
               onClick={() => onInsertChar(',')}
+              onLongPressChar={(char) => onInsertChar(char)}
               settings={settings}
               flexGrow={1.1}
+              ariaLabel="Comma, hold for question mark"
             />
 
             {/* Spacebar (clean, tactile look) */}
@@ -258,13 +244,17 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               ariaLabel="Space bar"
             />
 
-            {/* Period (.) */}
+            {/* Period (.) - Hold for (!) */}
             <Key
               label="."
               value="."
+              subLabel="!"
+              longPressChar="!"
               onClick={() => onInsertChar('.')}
+              onLongPressChar={(char) => onInsertChar(char)}
               settings={settings}
               flexGrow={1.1}
+              ariaLabel="Period, hold for exclamation mark"
             />
 
             {/* Enter Key */}

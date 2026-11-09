@@ -1,14 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Keyboard } from './components/Keyboard';
 import { KeyboardMode, KeyboardSettings } from './types/keyboard';
-import { Download, Copy, Check, Trash2, ArrowUpRight } from 'lucide-react';
+import { Download, Copy, Check, Trash2, Wand2 } from 'lucide-react';
 import { GradientInfinityIcon } from './components/GradientInfinityIcon';
+import { autocorrectLastWord } from './utils/autocorrect';
 
 export default function App() {
   const [typedText, setTypedText] = useState<string>('');
   const [mode, setMode] = useState<KeyboardMode>('alpha');
   const [activePhysicalKey, setActivePhysicalKey] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
+  const [autocorrectNotice, setAutocorrectNotice] = useState<string | null>(null);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const noticeTimerRef = useRef<number | null>(null);
 
   const settings: KeyboardSettings = {
     theme: 'charcoal',
@@ -23,24 +28,99 @@ export default function App() {
     swipeSensitivity: 35,
   };
 
-  const handleInsertChar = useCallback((char: string) => {
-    setTypedText((prev) => prev + char);
+  const showAutocorrectBadge = useCallback((message: string) => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    setAutocorrectNotice(message);
+    noticeTimerRef.current = window.setTimeout(() => {
+      setAutocorrectNotice(null);
+    }, 2200);
   }, []);
 
+  // Insert character with selection-replace and background autocorrect
+  const handleInsertChar = useCallback((char: string) => {
+    const ta = textareaRef.current;
+    let start = typedText.length;
+    let end = typedText.length;
+
+    if (ta) {
+      start = ta.selectionStart ?? typedText.length;
+      end = ta.selectionEnd ?? typedText.length;
+    }
+
+    // Replace selected text or insert at cursor
+    let newText = typedText.slice(0, start) + char + typedText.slice(end);
+    let newCursor = start + char.length;
+
+    // Background autocorrect: automatically triggers when completing a word
+    if (char === ' ' || char === '.' || char === ',' || char === '!' || char === '?' || char === '\n') {
+      const result = autocorrectLastWord(newText, newCursor);
+      if (result.didCorrect) {
+        newText = result.newText;
+        newCursor = result.newCursor;
+        showAutocorrectBadge('Autocorrected');
+      }
+    }
+
+    setTypedText(newText);
+    setTimeout(() => {
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(newCursor, newCursor);
+      }
+    }, 0);
+  }, [typedText, showAutocorrectBadge]);
+
+  // Backspace: deletes highlighted text if selected, or deletes 1 char before cursor
   const handleBackspace = useCallback(() => {
-    setTypedText((prev) => prev.slice(0, -1));
-  }, []);
+    const ta = textareaRef.current;
+    let start = typedText.length;
+    let end = typedText.length;
+
+    if (ta) {
+      start = ta.selectionStart ?? typedText.length;
+      end = ta.selectionEnd ?? typedText.length;
+    }
+
+    // Highlighting a word/range and hitting backspace: delete highlighted text!
+    if (start !== end) {
+      const newText = typedText.slice(0, start) + typedText.slice(end);
+      setTypedText(newText);
+      setTimeout(() => {
+        if (ta) {
+          ta.focus();
+          ta.setSelectionRange(start, start);
+        }
+      }, 0);
+      return;
+    }
+
+    // No selection: delete 1 character before cursor
+    if (start > 0) {
+      const newText = typedText.slice(0, start - 1) + typedText.slice(start);
+      const newCursor = start - 1;
+      setTypedText(newText);
+      setTimeout(() => {
+        if (ta) {
+          ta.focus();
+          ta.setSelectionRange(newCursor, newCursor);
+        }
+      }, 0);
+    }
+  }, [typedText]);
 
   const handleTab = useCallback(() => {
-    setTypedText((prev) => prev + '    ');
-  }, []);
+    handleInsertChar('    ');
+  }, [handleInsertChar]);
 
   const handleEnter = useCallback(() => {
-    setTypedText((prev) => prev + '\n');
-  }, []);
+    handleInsertChar('\n');
+  }, [handleInsertChar]);
 
   const handleClear = useCallback(() => {
     setTypedText('');
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
   }, []);
 
   const handleCopy = useCallback(async () => {
@@ -54,18 +134,48 @@ export default function App() {
     }
   }, [typedText]);
 
-  // Physical keyboard listener
+  // Handle direct textarea changes (e.g. typing or pasting directly in preview)
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    let val = e.target.value;
+    const cur = e.target.selectionStart ?? val.length;
+
+    // Check if the typed character is a word boundary
+    if (cur > 0 && [' ', '.', ',', '!', '?', '\n'].includes(val[cur - 1])) {
+      const result = autocorrectLastWord(val, cur);
+      if (result.didCorrect) {
+        val = result.newText;
+        setTypedText(val);
+        showAutocorrectBadge('Autocorrected');
+        setTimeout(() => {
+          e.target.setSelectionRange(result.newCursor, result.newCursor);
+        }, 0);
+        return;
+      }
+    }
+    setTypedText(val);
+  };
+
+  // Physical keyboard listener: integrates selection deletion and autocorrect
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't duplicate if typing directly inside the textarea
+      if (document.activeElement === textareaRef.current) {
+        setActivePhysicalKey(e.key);
+        return;
+      }
+
       setActivePhysicalKey(e.key);
       if (e.key === 'Backspace') {
+        e.preventDefault();
         handleBackspace();
       } else if (e.key === 'Tab') {
         e.preventDefault();
         handleTab();
       } else if (e.key === 'Enter') {
+        e.preventDefault();
         handleEnter();
       } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
         handleInsertChar(e.key);
       }
     };
@@ -79,6 +189,7 @@ export default function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
     };
   }, [handleBackspace, handleTab, handleEnter, handleInsertChar]);
 
@@ -104,11 +215,11 @@ export default function App() {
 
         {/* Zone 2: Concise Unboxed Helper Text */}
         <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <span>Instant tap to type</span>
+          <span>Hold , for ?</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
-          <span>Tap ∞ for symbols</span>
+          <span>Hold . for !</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
-          <span>Shift ⇧ · Swapped ? and ⌫</span>
+          <span>Background autocorrect active</span>
         </div>
 
         {/* Zone 3: Primary Action CTA */}
@@ -129,8 +240,17 @@ export default function App() {
         <div className="w-full max-w-2xl mx-auto flex flex-col justify-end min-h-[160px] pb-2">
           <div className="relative bg-[#13151e]/90 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_12px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all">
             {/* Note Canvas Header */}
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5 text-xs text-slate-400">
-              <span className="font-medium text-slate-300">Live Typing Preview</span>
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/5 text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-300">Live Editor</span>
+                {autocorrectNotice && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-medium animate-in fade-in duration-150">
+                    <Wand2 className="w-3 h-3" />
+                    <span>{autocorrectNotice}</span>
+                  </span>
+                )}
+              </div>
+
               <div className="flex items-center gap-1">
                 {typedText.length > 0 && (
                   <>
@@ -165,35 +285,32 @@ export default function App() {
               </div>
             </div>
 
-            {/* Note Canvas Body */}
-            <div className="min-h-[70px] sm:min-h-[90px] max-h-[180px] overflow-y-auto flex items-start">
-              {typedText.length > 0 ? (
-                <div className="text-lg sm:text-2xl font-normal text-white break-words whitespace-pre-wrap leading-relaxed w-full">
-                  {typedText}
-                  <span className="inline-block w-2 sm:w-2.5 h-5 sm:h-6 bg-sky-400 ml-1 translate-y-1 animate-pulse rounded-xs" />
-                </div>
-              ) : (
-                <div className="flex flex-col justify-center py-2 text-slate-400">
-                  <p className="text-sm sm:text-base font-normal text-slate-300">
-                    Type on the keyboard below to test...
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Super-fast typing · Numbers 1-0 on top · Tap ∞ for symbols
-                  </p>
-                </div>
-              )}
+            {/* Note Canvas Body: Interactive highlightable textarea */}
+            <div className="min-h-[80px] sm:min-h-[100px] max-h-[180px] flex items-start relative">
+              <textarea
+                ref={textareaRef}
+                value={typedText}
+                onChange={handleTextareaChange}
+                placeholder="Highlight any word and tap Backspace to delete. Hold , for ? and . for ! (autocorrect active)..."
+                className="w-full h-full min-h-[80px] sm:min-h-[100px] max-h-[180px] bg-transparent text-white text-lg sm:text-2xl font-normal leading-relaxed resize-none focus:outline-none selection:bg-sky-500/30 selection:text-white caret-sky-400 placeholder:text-slate-500 placeholder:text-sm sm:placeholder:text-base font-sans"
+                rows={3}
+              />
             </div>
 
             {/* Note Canvas Footer */}
-            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2 font-mono">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2 font-mono">
               <div className="flex items-center gap-2">
                 <span>{typedText.length} chars</span>
                 <span aria-hidden="true">·</span>
                 <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
               </div>
-              <span className="text-slate-400">
-                Mode: <strong className="text-slate-300 font-semibold">{mode === 'symbols' ? 'Symbols' : 'QWERTY'}</strong>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400/90 font-medium hidden sm:inline">Autocorrect On</span>
+                <span aria-hidden="true" className="text-slate-600 hidden sm:inline">·</span>
+                <span className="text-slate-400">
+                  Mode: <strong className="text-slate-300 font-semibold">{mode === 'symbols' ? 'Symbols' : 'QWERTY'}</strong>
+                </span>
+              </div>
             </div>
           </div>
         </div>

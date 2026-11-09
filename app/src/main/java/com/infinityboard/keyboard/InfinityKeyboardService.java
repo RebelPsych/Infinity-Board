@@ -11,6 +11,8 @@ import android.view.inputmethod.InputConnection;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InfinityKeyboardService extends InputMethodService {
 
@@ -19,6 +21,47 @@ public class InfinityKeyboardService extends InputMethodService {
     private boolean isCapsLock = false;
     private long lastShiftTapTime = 0;
     private LinearLayout keyboardContainer;
+
+    private static final Map<String, String> AUTOCORRECT_MAP = new HashMap<>();
+    static {
+        AUTOCORRECT_MAP.put("teh", "the");
+        AUTOCORRECT_MAP.put("thsi", "this");
+        AUTOCORRECT_MAP.put("taht", "that");
+        AUTOCORRECT_MAP.put("waht", "what");
+        AUTOCORRECT_MAP.put("wich", "which");
+        AUTOCORRECT_MAP.put("wiht", "with");
+        AUTOCORRECT_MAP.put("adn", "and");
+        AUTOCORRECT_MAP.put("recieve", "receive");
+        AUTOCORRECT_MAP.put("recieved", "received");
+        AUTOCORRECT_MAP.put("seperate", "separate");
+        AUTOCORRECT_MAP.put("definately", "definitely");
+        AUTOCORRECT_MAP.put("untill", "until");
+        AUTOCORRECT_MAP.put("becuase", "because");
+        AUTOCORRECT_MAP.put("becasue", "because");
+        AUTOCORRECT_MAP.put("wierd", "weird");
+        AUTOCORRECT_MAP.put("beleive", "believe");
+        AUTOCORRECT_MAP.put("occured", "occurred");
+        AUTOCORRECT_MAP.put("acommodate", "accommodate");
+        AUTOCORRECT_MAP.put("tomorow", "tomorrow");
+        AUTOCORRECT_MAP.put("alot", "a lot");
+        AUTOCORRECT_MAP.put("freind", "friend");
+        AUTOCORRECT_MAP.put("peolpe", "people");
+        AUTOCORRECT_MAP.put("dont", "don't");
+        AUTOCORRECT_MAP.put("cant", "can't");
+        AUTOCORRECT_MAP.put("wont", "won't");
+        AUTOCORRECT_MAP.put("didnt", "didn't");
+        AUTOCORRECT_MAP.put("isnt", "isn't");
+        AUTOCORRECT_MAP.put("arent", "aren't");
+        AUTOCORRECT_MAP.put("wasnt", "wasn't");
+        AUTOCORRECT_MAP.put("im", "I'm");
+        AUTOCORRECT_MAP.put("ive", "I've");
+        AUTOCORRECT_MAP.put("ill", "I'll");
+        AUTOCORRECT_MAP.put("id", "I'd");
+        AUTOCORRECT_MAP.put("i", "I");
+        AUTOCORRECT_MAP.put("youre", "youre");
+        AUTOCORRECT_MAP.put("theyre", "they're");
+        AUTOCORRECT_MAP.put("thats", "that's");
+    }
 
     @Override
     public View onCreateInputView() {
@@ -60,7 +103,7 @@ public class InfinityKeyboardService extends InputMethodService {
         String[] row1 = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"};
         keyboardContainer.addView(createRowLayout(row1, true));
 
-        // Row 3: asdfghjkl ? (swapped with backspace)
+        // Row 3: asdfghjkl (9 letters)
         boolean showUpper = isShifted || isCapsLock;
         String[] row2Letters = {"a", "s", "d", "f", "g", "h", "j", "k", "l"};
         LinearLayout row2Layout = new LinearLayout(this);
@@ -76,15 +119,9 @@ public class InfinityKeyboardService extends InputMethodService {
             btn.setOnClickListener(v -> handleLetterPress(l));
             row2Layout.addView(btn);
         }
-
-        // ? Key at end of Row 2
-        Button questionBtn = createKeyButton("?", false);
-        questionBtn.setTextColor(Color.WHITE);
-        questionBtn.setOnClickListener(v -> commitText("?"));
-        row2Layout.addView(questionBtn);
         keyboardContainer.addView(row2Layout);
 
-        // Row 4: ⇧ Shift key (replaces :), !, z x c v b n m, ⌫ Backspace (swapped with ?)
+        // Row 4: ⇧ Shift key, z x c v b n m, ⌫ Backspace
         LinearLayout row3Layout = new LinearLayout(this);
         row3Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row3Params = new LinearLayout.LayoutParams(
@@ -118,12 +155,6 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row3Layout.addView(shiftBtn);
 
-        // ! Key
-        Button exclamBtn = createKeyButton("!", false);
-        exclamBtn.setTextColor(Color.WHITE);
-        exclamBtn.setOnClickListener(v -> commitText("!"));
-        row3Layout.addView(exclamBtn);
-
         // z x c v b n m
         String[] row3Letters = {"z", "x", "c", "v", "b", "n", "m"};
         for (String item : row3Letters) {
@@ -133,7 +164,7 @@ public class InfinityKeyboardService extends InputMethodService {
             row3Layout.addView(btn);
         }
 
-        // Backspace key at the end of Row 3
+        // Backspace key at the end of Row 4
         Button backspaceBtn = createKeyButton("⌫", true);
         LinearLayout.LayoutParams bsParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.3f);
         bsParams.setMargins(1, 0, 1, 0);
@@ -142,7 +173,7 @@ public class InfinityKeyboardService extends InputMethodService {
         row3Layout.addView(backspaceBtn);
         keyboardContainer.addView(row3Layout);
 
-        // Row 4: Infinity Key (clean, no 123), comma, spacebar, period, Enter key
+        // Row 5: Infinity Key, comma (hold for ?), spacebar, period (hold for !), Enter key
         LinearLayout row4Layout = new LinearLayout(this);
         row4Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row4Params = new LinearLayout.LayoutParams(
@@ -163,12 +194,16 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row4Layout.addView(infinityBtn);
 
-        // Comma
+        // Comma (hold for ?)
         Button commaBtn = createKeyButton(",", false);
         LinearLayout.LayoutParams commaP = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.1f);
         commaP.setMargins(1, 0, 1, 0);
         commaBtn.setLayoutParams(commaP);
         commaBtn.setOnClickListener(v -> commitText(","));
+        commaBtn.setOnLongClickListener(v -> {
+            commitText("?");
+            return true;
+        });
         row4Layout.addView(commaBtn);
 
         // Spacebar
@@ -179,12 +214,16 @@ public class InfinityKeyboardService extends InputMethodService {
         spaceBtn.setOnClickListener(v -> commitText(" "));
         row4Layout.addView(spaceBtn);
 
-        // Period
+        // Period (hold for !)
         Button periodBtn = createKeyButton(".", false);
         LinearLayout.LayoutParams periodP = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.1f);
         periodP.setMargins(1, 0, 1, 0);
         periodBtn.setLayoutParams(periodP);
         periodBtn.setOnClickListener(v -> commitText("."));
+        periodBtn.setOnLongClickListener(v -> {
+            commitText("!");
+            return true;
+        });
         row4Layout.addView(periodBtn);
 
         // Enter
@@ -376,14 +415,50 @@ public class InfinityKeyboardService extends InputMethodService {
     private void commitText(String text) {
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
+            if (" ".equals(text) || ".".equals(text) || ",".equals(text) || "?".equals(text) || "!".equals(text) || "\n".equals(text)) {
+                performAutocorrect(ic);
+            }
             ic.commitText(text, 1);
+        }
+    }
+
+    private void performAutocorrect(InputConnection ic) {
+        CharSequence before = ic.getTextBeforeCursor(40, 0);
+        if (before == null || before.length() == 0) return;
+
+        int end = before.length();
+        int start = end;
+        while (start > 0 && Character.isLetterOrDigit(before.charAt(start - 1))) {
+            start--;
+        }
+        if (start >= end) return;
+
+        String rawWord = before.subSequence(start, end).toString();
+        String lower = rawWord.toLowerCase();
+        String replacement = AUTOCORRECT_MAP.get(lower);
+
+        if (replacement != null && !replacement.equalsIgnoreCase(rawWord)) {
+            // Preserve capitalization
+            if (rawWord.equals(rawWord.toUpperCase()) && rawWord.length() > 1) {
+                replacement = replacement.toUpperCase();
+            } else if (Character.isUpperCase(rawWord.charAt(0))) {
+                replacement = Character.toUpperCase(replacement.charAt(0)) + replacement.substring(1);
+            }
+            ic.deleteSurroundingText(rawWord.length(), 0);
+            ic.commitText(replacement, 1);
         }
     }
 
     private void deleteChar() {
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
-            ic.deleteSurroundingText(1, 0);
+            // Delete highlighted/selected text if any
+            CharSequence selected = ic.getSelectedText(0);
+            if (selected != null && selected.length() > 0) {
+                ic.commitText("", 1);
+            } else {
+                ic.deleteSurroundingText(1, 0);
+            }
         }
     }
 }
