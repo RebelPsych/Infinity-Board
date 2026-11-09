@@ -24,8 +24,8 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
   // Row 1: Number keys (1 2 3 4 5 6 7 8 9 0) moved to symbol keyboard
   const rowNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
-  // Row 2: tab key > / : " ~ ' ; \ <
-  const row2Symbols = ['>', '/', ':', '"', '~', '\'', ';', '\\', '<'];
+  // Row 2: tab key > \ : " ~ ' ; / < (swapped \ and /)
+  const row2Symbols = ['>', '\\', ':', '"', '~', '\'', ';', '/', '<'];
 
   // Row 3: * @ [ ♥ = ∞ ] ★ & followed by backspace
   const row3Symbols = ['*', '@', '[', '♥', '=', '∞', ']', '★', '&'];
@@ -186,9 +186,13 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           ariaLabel="Period, hold for exclamation mark"
         />
 
-        {/* Enter Key */}
+        {/* Enter Key: bigger symbol and centered */}
         <Key
-          label={<CornerDownLeft className="w-6 h-6 text-sky-400" />}
+          label={
+            <div className="w-full h-full flex items-center justify-center">
+              <CornerDownLeft className="w-7 h-7 text-sky-400 stroke-[2.4]" />
+            </div>
+          }
           isSpecial
           onClick={onEnter}
           settings={settings}

@@ -14,6 +14,7 @@ interface KeyboardProps {
   setMode: (mode: KeyboardMode) => void;
   settings: KeyboardSettings;
   activePhysicalKey?: string | null;
+  isDissolving?: boolean;
 }
 
 export const Keyboard: React.FC<KeyboardProps> = ({
@@ -25,6 +26,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   setMode,
   settings,
   activePhysicalKey,
+  isDissolving = false,
 }) => {
   const [shiftState, setShiftState] = useState<ShiftState>('off');
   const lastShiftTapRef = useRef<number>(0);
@@ -67,7 +69,13 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   const isUppercase = shiftState !== 'off';
 
   return (
-    <div className="w-full h-[275px] sm:h-[295px] bg-gradient-to-r from-[#120621] via-[#2b0e4c] to-[#18082d] border-t border-purple-500/20 shadow-[0_-8px_32px_rgba(15,4,28,0.8)] flex flex-col justify-between pt-1 px-1 pb-2 sm:pb-3 select-none relative z-30 animate-in fade-in duration-300">
+    <div
+      className={`w-full h-[275px] sm:h-[295px] bg-[#0d0f14] border-t flex flex-col justify-between pt-1 px-1 pb-2 sm:pb-3 select-none relative z-30 transition-all duration-300 ${
+        isDissolving
+          ? 'border-t-[#c084fc]/60 shadow-[0_-12px_45px_rgba(192,132,252,0.45),0_0_65px_rgba(168,85,247,0.3)] animate-in fade-in duration-200'
+          : 'border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]'
+      }`}
+    >
       {mode === 'symbols' ? (
         <SymbolsLayout
           onInsertChar={onInsertChar}
@@ -202,11 +210,11 @@ export const Keyboard: React.FC<KeyboardProps> = ({
 
           {/* Row 5 (Bottom Row): Infinity Key, comma (hold for ?), space, period (hold for !), Enter key */}
           <div className="flex w-full h-[22%] items-stretch justify-center gap-0.5">
-            {/* Infinity Key (NO numbers 123 - clean blue-to-pink gradient infinity icon) */}
+            {/* Infinity Key (clean blue-to-pink gradient infinity icon, centered) */}
             <Key
               label={
-                <div className="flex items-center justify-center">
-                  <GradientInfinityIcon size={25} />
+                <div className="w-full h-full flex items-center justify-center">
+                  <GradientInfinityIcon size={27} />
                 </div>
               }
               isSpecial
@@ -257,9 +265,13 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               ariaLabel="Period, hold for exclamation mark"
             />
 
-            {/* Enter Key */}
+            {/* Enter Key: bigger symbol and centered */}
             <Key
-              label={<CornerDownLeft className="w-6 h-6 text-sky-400" />}
+              label={
+                <div className="w-full h-full flex items-center justify-center">
+                  <CornerDownLeft className="w-7 h-7 text-sky-400 stroke-[2.4]" />
+                </div>
+              }
               isSpecial
               onClick={onEnter}
               settings={settings}
