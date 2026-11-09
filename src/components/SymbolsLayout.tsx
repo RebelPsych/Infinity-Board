@@ -144,13 +144,17 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
         />
 
-        {/* Comma (,) */}
+        {/* Comma (,) - Hold for (?) */}
         <Key
           label=","
           value=","
+          subLabel="?"
+          longPressChar="?"
           onClick={() => onInsertChar(',')}
+          onLongPressChar={(char) => onInsertChar(char)}
           settings={settings}
           flexGrow={1.1}
+          ariaLabel="Comma, hold for question mark"
         />
 
         {/* Spacebar */}
@@ -167,13 +171,17 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           ariaLabel="Space bar"
         />
 
-        {/* Period (.) */}
+        {/* Period (.) - Hold for (!) */}
         <Key
           label="."
           value="."
+          subLabel="!"
+          longPressChar="!"
           onClick={() => onInsertChar('.')}
+          onLongPressChar={(char) => onInsertChar(char)}
           settings={settings}
           flexGrow={1.1}
+          ariaLabel="Period, hold for exclamation mark"
         />
 
         {/* Enter Key */}

@@ -140,16 +140,16 @@ export const Key: React.FC<KeyProps> = memo(({
   }, []);
 
   // Simple Keyboard Black and grey with high contrast white lettering
-  // When a key is tapped it appears an instant lighter shade of grey
+  // Tactile physical keycap styling with slight outline within borders and realistic press depression
   const getKeyClasses = () => {
     if (isSpecial) {
       return active
-        ? 'bg-[#3a3f4e] text-white border-[#555d72] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.4)]'
-        : 'bg-[#15171D] text-slate-200 border-[#232732] hover:bg-[#1a1c24] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]';
+        ? 'bg-[#2b3142] text-white border-[#4d5773] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.92] translate-y-[1.5px]'
+        : 'bg-[#151821] text-slate-200 border-[#2b3140] ring-1 ring-inset ring-white/[0.06] hover:bg-[#1a1d28] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0';
     }
     return active
-      ? 'bg-[#484f63] text-white border-[#626b84] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.4)]'
-      : 'bg-[#20222A] text-white border-[#2c303c] hover:bg-[#252832] shadow-[0_1px_2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]';
+      ? 'bg-[#3d4559] text-white border-[#5c6888] font-bold ring-1 ring-inset ring-white/[0.16] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.92] translate-y-[1.5px]'
+      : 'bg-[#222530] text-white border-[#3b4356] ring-1 ring-inset ring-white/[0.09] hover:bg-[#282b38] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0';
   };
 
   const popupDisplay = activePopupChar || (typeof label === 'string' ? label : null);
@@ -162,7 +162,7 @@ export const Key: React.FC<KeyProps> = memo(({
         flexBasis: 0,
         minWidth: width || 'auto',
       }}
-      className="relative flex items-center justify-center p-[1px] touch-none select-none h-full"
+      className="relative flex items-center justify-center p-[2px] touch-none select-none h-full"
     >
       {/* Key Popup preview bubble on tap */}
       {settings.showKeyPopup && isPressed && popupDisplay && popupDisplay.length === 1 && (
@@ -181,7 +181,7 @@ export const Key: React.FC<KeyProps> = memo(({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerLeave}
         onPointerLeave={handlePointerLeave}
-        className={`key-tactile w-full h-full rounded-[7px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-colors duration-50 ${getKeyClasses()} ${className}`}
+        className={`key-tactile w-full h-full rounded-[7px] border flex flex-col items-center justify-center relative cursor-pointer select-none transition-all duration-75 ease-out ${getKeyClasses()} ${className}`}
       >
         {children || (
           <>
@@ -189,7 +189,7 @@ export const Key: React.FC<KeyProps> = memo(({
               {label}
             </span>
             {subLabel && (
-              <span className="absolute top-1 right-1.5 text-[10px] sm:text-[11px] text-sky-400 font-bold leading-none select-none pointer-events-none">
+              <span className="absolute top-1 right-1.5 text-[11px] sm:text-[12px] text-sky-400 font-black leading-none select-none pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 {subLabel}
               </span>
             )}
