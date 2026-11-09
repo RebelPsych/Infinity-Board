@@ -140,16 +140,16 @@ export const Key: React.FC<KeyProps> = memo(({
   }, []);
 
   // Simple Keyboard Black and grey with high contrast white lettering
-  // Tactile physical keycap styling with slight outline within borders and realistic press depression
+  // Tactile physical keycap styling with slight outline within borders and immediate 0ms press depression
   const getKeyClasses = () => {
     if (isSpecial) {
       return active
-        ? 'bg-[#2b3142] text-white border-[#4d5773] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.92] translate-y-[1.5px]'
-        : 'bg-[#151821] text-slate-200 border-[#2b3140] ring-1 ring-inset ring-white/[0.06] hover:bg-[#1a1d28] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0';
+        ? 'bg-[#2b3142] text-white border-[#4d5773] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.91] translate-y-[1.5px] transition-none'
+        : 'bg-[#151821] text-slate-200 border-[#2b3140] ring-1 ring-inset ring-white/[0.06] hover:bg-[#1a1d28] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0 transition-transform duration-75 ease-out';
     }
     return active
-      ? 'bg-[#3d4559] text-white border-[#5c6888] font-bold ring-1 ring-inset ring-white/[0.16] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.92] translate-y-[1.5px]'
-      : 'bg-[#222530] text-white border-[#3b4356] ring-1 ring-inset ring-white/[0.09] hover:bg-[#282b38] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0';
+      ? 'bg-[#3d4559] text-white border-[#5c6888] font-bold ring-1 ring-inset ring-white/[0.16] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] scale-[0.91] translate-y-[1.5px] transition-none'
+      : 'bg-[#222530] text-white border-[#3b4356] ring-1 ring-inset ring-white/[0.09] hover:bg-[#282b38] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-2px_0_rgba(0,0,0,0.5),0_2px_0_rgba(0,0,0,0.6)] scale-100 translate-y-0 transition-transform duration-75 ease-out';
   };
 
   const popupDisplay = activePopupChar || (typeof label === 'string' ? label : null);

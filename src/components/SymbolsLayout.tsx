@@ -88,7 +88,9 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
               ) : sym === '★' ? (
                 <span className="text-amber-300 font-bold">{sym}</span>
               ) : sym === '∞' ? (
-                <GradientInfinityIcon size={19} />
+                <span className="text-[#c084fc] font-bold text-xl leading-none flex items-center justify-center drop-shadow-[0_0_8px_rgba(192,132,252,0.3)]">
+                  ∞
+                </span>
               ) : (
                 sym
               )

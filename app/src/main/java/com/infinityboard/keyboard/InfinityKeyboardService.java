@@ -30,6 +30,11 @@ public class InfinityKeyboardService extends InputMethodService {
     private long lastShiftTapTime = 0;
     private LinearLayout keyboardContainer;
 
+    // Standard ergonomic row heights in dp
+    private static final int ROW_HEIGHT_DP = 46;
+    private static final int BOTTOM_ROW_HEIGHT_DP = 48;
+    private static final int TOTAL_KEYBOARD_HEIGHT_DP = 260;
+
     private static final Map<String, String> AUTOCORRECT_MAP = new HashMap<>();
     static {
         AUTOCORRECT_MAP.put("teh", "the");
@@ -73,22 +78,40 @@ public class InfinityKeyboardService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        keyboardContainer = new LinearLayout(this);
+        final float density = getResources().getDisplayMetrics().density;
+        final int targetHeight = (int) (TOTAL_KEYBOARD_HEIGHT_DP * density);
+
+        // Fixed original size keyboard container with strict onMeasure
+        keyboardContainer = new LinearLayout(this) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                int exactHeightSpec = MeasureSpec.makeMeasureSpec(targetHeight, MeasureSpec.EXACTLY);
+                super.onMeasure(widthMeasureSpec, exactHeightSpec);
+            }
+        };
         keyboardContainer.setOrientation(LinearLayout.VERTICAL);
         keyboardContainer.setBackgroundColor(Color.parseColor("#0A0C10"));
 
-        // Ergonomic bottom padding to lift bottom row and reduce thumb strain
-        float density = getResources().getDisplayMetrics().density;
-        int bottomPadding = (int) (28 * density);
-        keyboardContainer.setPadding((int) (2 * density), (int) (6 * density), (int) (2 * density), bottomPadding);
+        int bottomPadding = (int) (10 * density);
+        int topPadding = (int) (4 * density);
+        keyboardContainer.setPadding((int) (2 * density), topPadding, (int) (2 * density), bottomPadding);
 
-        // 50% of screen height
-        int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.50f);
         keyboardContainer.setLayoutParams(new ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, height));
+            ViewGroup.LayoutParams.MATCH_PARENT, targetHeight));
 
         renderKeyboard();
         return keyboardContainer;
+    }
+
+    @Override
+    public void onComputeInsets(Insets outInsets) {
+        super.onComputeInsets(outInsets);
+        if (keyboardContainer != null) {
+            int[] loc = new int[2];
+            keyboardContainer.getLocationInWindow(loc);
+            outInsets.contentTopInsets = loc[1];
+            outInsets.visibleTopInsets = loc[1];
+        }
     }
 
     private void renderKeyboard() {
@@ -104,14 +127,15 @@ public class InfinityKeyboardService extends InputMethodService {
 
     private void renderMainKeyboard() {
         float density = getResources().getDisplayMetrics().density;
+        int rowHeight = (int) (ROW_HEIGHT_DP * density);
 
         // Top Row: Numbers (1 2 3 4 5 6 7 8 9 0)
         String[] rowNumbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
-        keyboardContainer.addView(createRowLayout(rowNumbers, false));
+        keyboardContainer.addView(createRowLayout(rowNumbers, false, rowHeight));
 
         // Row 2: qwertyuiop (lowercase by default, hold/shift to capitalize)
         String[] row1 = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"};
-        keyboardContainer.addView(createRowLayout(row1, true));
+        keyboardContainer.addView(createRowLayout(row1, true, rowHeight));
 
         // Row 3: asdfghjkl (9 letters)
         boolean showUpper = isShifted || isCapsLock;
@@ -119,7 +143,7 @@ public class InfinityKeyboardService extends InputMethodService {
         LinearLayout row2Layout = new LinearLayout(this);
         row2Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row2Params = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight);
         row2Params.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row2Layout.setLayoutParams(row2Params);
         int sidePadding = (int) (12 * density);
@@ -137,7 +161,7 @@ public class InfinityKeyboardService extends InputMethodService {
         LinearLayout row3Layout = new LinearLayout(this);
         row3Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row3Params = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight);
         row3Params.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row3Layout.setLayoutParams(row3Params);
 
@@ -201,27 +225,18 @@ public class InfinityKeyboardService extends InputMethodService {
         // Row 5: Infinity Key, comma (with small ?), spacebar, period (with small !), Enter key
         LinearLayout row4Layout = new LinearLayout(this);
         row4Layout.setOrientation(LinearLayout.HORIZONTAL);
+        int bottomRowHeight = (int) (BOTTOM_ROW_HEIGHT_DP * density);
         LinearLayout.LayoutParams row4Params = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.15f);
+            ViewGroup.LayoutParams.MATCH_PARENT, bottomRowHeight);
         row4Params.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row4Layout.setLayoutParams(row4Params);
 
-        // Clean Infinity Key with gradient shader
+        // Clean Infinity Key with purple color matching symbol keyboard
         FrameLayout infinityKey = createKeyView("∞", null, true, 1.4f);
         TextView infTv = getMainTextView(infinityKey);
         if (infTv != null) {
             infTv.setTextSize(26);
             infTv.setTextColor(Color.parseColor("#C084FC"));
-            infTv.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-                int w = right - left;
-                if (w > 0) {
-                    Shader textShader = new LinearGradient(0, 0, w, 0,
-                        new int[]{Color.parseColor("#38BDF8"), Color.parseColor("#C084FC"), Color.parseColor("#F43F5E")},
-                        null, Shader.TileMode.CLAMP);
-                    infTv.getPaint().setShader(textShader);
-                    infTv.invalidate();
-                }
-            });
         }
         infinityKey.setOnClickListener(v -> {
             isSymbols = true;
@@ -290,17 +305,18 @@ public class InfinityKeyboardService extends InputMethodService {
 
     private void renderSymbols() {
         float density = getResources().getDisplayMetrics().density;
+        int rowHeight = (int) (ROW_HEIGHT_DP * density);
 
         // Row 1: Numbers (1 2 3 4 5 6 7 8 9 0)
         String[] row1Numbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
-        keyboardContainer.addView(createRowLayout(row1Numbers, false));
+        keyboardContainer.addView(createRowLayout(row1Numbers, false, rowHeight));
 
         // Row 2: tab key > / : " ~ ' ; \ <
         String[] row2Syms = {">", "/", ":", "\"", "~", "'", ";", "\\", "<"};
         LinearLayout row2Layout = new LinearLayout(this);
         row2Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row2P = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight);
         row2P.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row2Layout.setLayoutParams(row2P);
 
@@ -323,7 +339,7 @@ public class InfinityKeyboardService extends InputMethodService {
         LinearLayout row3Layout = new LinearLayout(this);
         row3Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row3P = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight);
         row3P.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row3Layout.setLayoutParams(row3P);
 
@@ -334,7 +350,11 @@ public class InfinityKeyboardService extends InputMethodService {
             if (tv != null) {
                 if (sym.equals("♥")) tv.setTextColor(Color.parseColor("#F43F5E"));
                 if (sym.equals("★")) tv.setTextColor(Color.parseColor("#FBBF24"));
-                if (sym.equals("∞")) tv.setTextColor(Color.parseColor("#38BDF8"));
+                // Matched purple color of switch infinity key (#C084FC)
+                if (sym.equals("∞")) {
+                    tv.setTextColor(Color.parseColor("#C084FC"));
+                    tv.setTextSize(24);
+                }
             }
             keyView.setOnClickListener(v -> commitText(sym));
             row3Layout.addView(keyView);
@@ -350,7 +370,7 @@ public class InfinityKeyboardService extends InputMethodService {
         LinearLayout row4Layout = new LinearLayout(this);
         row4Layout.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams row4P = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, rowHeight);
         row4P.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row4Layout.setLayoutParams(row4P);
         int sidePad = (int) (12 * density);
@@ -367,8 +387,9 @@ public class InfinityKeyboardService extends InputMethodService {
         // Row 5: ABC key, Comma (with ?), Space, Period (with !), Enter
         LinearLayout row5Layout = new LinearLayout(this);
         row5Layout.setOrientation(LinearLayout.HORIZONTAL);
+        int bottomRowHeight = (int) (BOTTOM_ROW_HEIGHT_DP * density);
         LinearLayout.LayoutParams row5P = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.15f);
+            ViewGroup.LayoutParams.MATCH_PARENT, bottomRowHeight);
         row5P.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row5Layout.setLayoutParams(row5P);
 
@@ -439,12 +460,12 @@ public class InfinityKeyboardService extends InputMethodService {
         keyboardContainer.addView(row5Layout);
     }
 
-    private LinearLayout createRowLayout(String[] keys, boolean isAlpha) {
+    private LinearLayout createRowLayout(String[] keys, boolean isAlpha, int height) {
         float density = getResources().getDisplayMetrics().density;
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            ViewGroup.LayoutParams.MATCH_PARENT, height);
         params.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row.setLayoutParams(params);
 
@@ -472,7 +493,7 @@ public class InfinityKeyboardService extends InputMethodService {
     }
 
     // Creates an authentic tactile keyboard key with outline within borders,
-    // centered main text, optional small subtext (e.g. ? or !), and shrinking press depression
+    // centered main text, optional small subtext (e.g. ? or !), and immediate 0ms press depression
     private FrameLayout createKeyView(String mainText, String subText, boolean isSpecial, float weight) {
         float density = getResources().getDisplayMetrics().density;
         FrameLayout keyView = new FrameLayout(this);
@@ -548,24 +569,24 @@ public class InfinityKeyboardService extends InputMethodService {
         return sld;
     }
 
-    // Smoothly shrinks the key view to 92% and depresses slightly on touch
+    // Instantly shrinks the key view to 91% on touch (0ms latency) and springs back on release
     private void setupKeyDepressAnimation(View view, float density) {
         view.setOnTouchListener((v, event) -> {
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
-                v.animate()
-                    .scaleX(0.92f)
-                    .scaleY(0.92f)
-                    .translationY(1.5f * density)
-                    .setDuration(45)
-                    .start();
+                // Immediate instant 0ms shrink on touch
+                v.animate().cancel();
+                v.setScaleX(0.91f);
+                v.setScaleY(0.91f);
+                v.setTranslationY(1.5f * density);
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                // Smooth spring-back on release
                 v.animate()
                     .scaleX(1.0f)
                     .scaleY(1.0f)
                     .translationY(0f)
-                    .setDuration(70)
+                    .setDuration(60)
                     .start();
             }
             return false; // Return false so onClickListener and onLongClickListener continue to fire

@@ -67,7 +67,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   const isUppercase = shiftState !== 'off';
 
   return (
-    <div className="w-full h-[50vh] min-h-[390px] max-h-[500px] bg-[#0d0f14] border-t border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] flex flex-col justify-between pt-1.5 px-1.5 pb-6 sm:pb-8 select-none relative z-30 transition-all duration-150">
+    <div className="w-full h-[275px] sm:h-[295px] bg-[#0d0f14] border-t border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] flex flex-col justify-between pt-1 px-1 pb-2 sm:pb-3 select-none relative z-30 transition-all duration-150">
       {mode === 'symbols' ? (
         <SymbolsLayout
           onInsertChar={onInsertChar}
