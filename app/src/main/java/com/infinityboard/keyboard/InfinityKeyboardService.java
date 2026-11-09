@@ -12,9 +12,13 @@ import android.inputmethodservice.InputMethodService;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -29,6 +33,7 @@ public class InfinityKeyboardService extends InputMethodService {
     private boolean isCapsLock = false;
     private long lastShiftTapTime = 0;
     private LinearLayout keyboardContainer;
+    private boolean isExiting = false;
 
     // Standard ergonomic row heights in dp
     private static final int ROW_HEIGHT_DP = 46;
@@ -90,7 +95,17 @@ public class InfinityKeyboardService extends InputMethodService {
             }
         };
         keyboardContainer.setOrientation(LinearLayout.VERTICAL);
-        keyboardContainer.setBackgroundColor(Color.parseColor("#0A0C10"));
+
+        // Dark purple gradient background from left to right
+        GradientDrawable darkPurpleBg = new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[]{
+                Color.parseColor("#120621"), // Deep dark midnight purple left
+                Color.parseColor("#2B0E4C"), // Rich glowing dark purple center
+                Color.parseColor("#18082D")  // Dark plum purple right
+            }
+        );
+        keyboardContainer.setBackground(darkPurpleBg);
 
         int bottomPadding = (int) (10 * density);
         int topPadding = (int) (4 * density);
@@ -111,6 +126,102 @@ public class InfinityKeyboardService extends InputMethodService {
             keyboardContainer.getLocationInWindow(loc);
             outInsets.contentTopInsets = loc[1];
             outInsets.visibleTopInsets = loc[1];
+        }
+    }
+
+    @Override
+    public void onWindowShown() {
+        super.onWindowShown();
+        isExiting = false;
+        animateEnter();
+    }
+
+    @Override
+    public void onStartInputView(EditorInfo info, boolean restarting) {
+        super.onStartInputView(info, restarting);
+        if (!restarting && !isExiting) {
+            animateEnter();
+        }
+    }
+
+    // Dissolves the background in and flies the keys in from off-screen
+    private void animateEnter() {
+        if (keyboardContainer == null) return;
+        final float density = getResources().getDisplayMetrics().density;
+
+        // Background dissolves in
+        keyboardContainer.setAlpha(0f);
+        keyboardContainer.animate()
+            .alpha(1.0f)
+            .setDuration(260)
+            .setInterpolator(new DecelerateInterpolator())
+            .start();
+
+        // Keys fly in from off-screen bottom with subtle stagger
+        int childCount = keyboardContainer.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            View row = keyboardContainer.getChildAt(i);
+            row.setTranslationY(density * 260);
+            row.animate()
+                .translationY(0f)
+                .setDuration(240 + i * 20)
+                .setInterpolator(new DecelerateInterpolator(1.4f))
+                .start();
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Intercept down-arrow navigation button (BACK key) to animate exit
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if (!isExiting && isInputViewShown()) {
+                animateExitAndHide();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    // Dissolves the background out and flies the keys down off-screen
+    private void animateExitAndHide() {
+        if (keyboardContainer == null || isExiting) return;
+        isExiting = true;
+        final float density = getResources().getDisplayMetrics().density;
+
+        // Background dissolves out
+        keyboardContainer.animate()
+            .alpha(0f)
+            .setDuration(220)
+            .setInterpolator(new AccelerateInterpolator())
+            .start();
+
+        // Keys fly out downwards off screen
+        int childCount = keyboardContainer.getChildCount();
+        if (childCount == 0) {
+            requestHideSelf(0);
+            isExiting = false;
+            return;
+        }
+
+        for (int i = 0; i < childCount; i++) {
+            View row = keyboardContainer.getChildAt(i);
+            boolean isLast = (i == childCount - 1);
+            row.animate()
+                .translationY(density * 300)
+                .setDuration(220)
+                .setInterpolator(new AccelerateInterpolator(1.2f))
+                .withEndAction(isLast ? () -> {
+                    requestHideSelf(0);
+                    isExiting = false;
+                    // Reset positions for next entrance
+                    if (keyboardContainer != null) {
+                        keyboardContainer.setAlpha(1.0f);
+                        for (int j = 0; j < keyboardContainer.getChildCount(); j++) {
+                            keyboardContainer.getChildAt(j).setTranslationY(0f);
+                        }
+                    }
+                } : null)
+                .start();
         }
     }
 
