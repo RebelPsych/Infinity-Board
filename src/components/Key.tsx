@@ -167,12 +167,11 @@ export const Key: React.FC<KeyProps> = memo(({
       {/* Key Popup preview bubble: dissolves in with glowing purple aura */}
       {settings.showKeyPopup && isPressed && popupDisplay && popupDisplay.length === 1 && (
         <div className="absolute -top-14 z-50 pointer-events-none transform -translate-x-1/2 left-1/2 flex flex-col items-center animate-in fade-in duration-150 zoom-in-90 ease-out">
-          <div className="bg-[#1b1728]/95 text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-[0_0_22px_rgba(192,132,252,0.45),0_12px_28px_rgba(0,0,0,0.8)] border border-[#c084fc]/40 flex items-center justify-center min-w-[50px] min-h-[50px] backdrop-blur-md relative overflow-hidden">
+          <div className="bg-[#1b1728]/95 text-white text-2xl font-bold px-4 py-1.5 rounded-xl shadow-[0_0_20px_rgba(192,132,252,0.35),0_12px_28px_rgba(0,0,0,0.8)] border border-[#c084fc]/30 flex items-center justify-center min-w-[50px] min-h-[50px] backdrop-blur-md relative overflow-hidden">
             <span className="relative z-10">{popupDisplay}</span>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(192,132,252,0.25),transparent_70%)] pointer-events-none" />
-            <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#e879f9] animate-ping opacity-75" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(192,132,252,0.2),transparent_70%)] pointer-events-none" />
           </div>
-          <div className="w-2.5 h-2.5 bg-[#1b1728] rotate-45 -mt-1.5 shadow-sm border-r border-b border-[#c084fc]/40" />
+          <div className="w-2.5 h-2.5 bg-[#1b1728] rotate-45 -mt-1.5 shadow-sm border-r border-b border-[#c084fc]/30" />
         </div>
       )}
 

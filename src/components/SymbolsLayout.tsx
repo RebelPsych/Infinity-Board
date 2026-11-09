@@ -84,11 +84,11 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
             key={sym}
             label={
               sym === '♥' ? (
-                <span className="text-rose-400 font-bold">{sym}</span>
+                <span className="text-rose-400 font-bold text-[15px] leading-none select-none">{sym}</span>
               ) : sym === '★' ? (
-                <span className="text-amber-300 font-bold">{sym}</span>
+                <span className="text-amber-300 font-bold text-lg leading-none select-none drop-shadow-[0_0_8px_rgba(56,189,248,0.85)]">{sym}</span>
               ) : sym === '∞' ? (
-                <span className="text-[#c084fc] font-bold text-xl leading-none flex items-center justify-center drop-shadow-[0_0_8px_rgba(192,132,252,0.3)]">
+                <span className="text-[#b989f8] font-bold text-xl leading-none flex items-center justify-center drop-shadow-[0_0_8px_rgba(185,137,248,0.4)]">
                   ∞
                 </span>
               ) : (

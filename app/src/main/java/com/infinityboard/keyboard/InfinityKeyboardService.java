@@ -3,9 +3,8 @@ package com.infinityboard.keyboard;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Shader;
+import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -17,16 +16,12 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class InfinityKeyboardService extends InputMethodService {
 
@@ -34,10 +29,7 @@ public class InfinityKeyboardService extends InputMethodService {
     private boolean isShifted = false;
     private boolean isCapsLock = false;
     private long lastShiftTapTime = 0;
-    private FrameLayout rootInputView;
     private LinearLayout keyboardContainer;
-    private PurpleParticleOverlayView particleOverlay;
-    private boolean hasTypedFirstChar = false;
 
     // Standard ergonomic row heights in dp
     private static final int ROW_HEIGHT_DP = 46;
@@ -85,78 +77,50 @@ public class InfinityKeyboardService extends InputMethodService {
         AUTOCORRECT_MAP.put("thats", "that's");
     }
 
-    // High performance purple particle animation system
-    private static class Particle {
-        float x, y, vx, vy, size, alpha, decay;
-        int color;
-    }
-
-    private static class PurpleParticleOverlayView extends View {
-        private final List<Particle> particles = new ArrayList<>();
+    // Mathematically centered custom return arrow
+    private static class EnterArrowView extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Random rand = new Random();
-        private final int[] colors = {
-            Color.parseColor("#C084FC"),
-            Color.parseColor("#A855F7"),
-            Color.parseColor("#E879F9"),
-            Color.parseColor("#D8B4FE"),
-            Color.parseColor("#9333EA"),
-            Color.parseColor("#38BDF8")
-        };
+        private final Path path = new Path();
 
-        public PurpleParticleOverlayView(Context context) {
+        public EnterArrowView(Context context) {
             super(context);
-        }
-
-        public void burst(boolean isFirstChar) {
-            int w = getWidth();
-            int h = getHeight();
-            if (w <= 0 || h <= 0) return;
-
-            int count = isFirstChar ? 48 : 12;
-            for (int i = 0; i < count; i++) {
-                Particle p = new Particle();
-                p.x = rand.nextFloat() * w;
-                p.y = rand.nextFloat() * (h * 0.9f);
-                float angle = (float) (rand.nextFloat() * Math.PI * 2);
-                float speed = rand.nextFloat() * (isFirstChar ? 5.0f : 3.0f) + 1.2f;
-                p.vx = (float) Math.cos(angle) * speed;
-                p.vy = (float) Math.sin(angle) * speed - 1.0f;
-                p.size = rand.nextFloat() * (isFirstChar ? 8f : 5f) + 3f;
-                p.alpha = 1.0f;
-                p.decay = rand.nextFloat() * 0.035f + 0.02f;
-                p.color = colors[rand.nextInt(colors.length)];
-                particles.add(p);
-            }
-            postInvalidateOnAnimation();
+            paint.setColor(Color.parseColor("#38BDF8"));
+            paint.setStyle(Paint.Style.STROKE);
+            float density = getResources().getDisplayMetrics().density;
+            paint.setStrokeWidth(2.3f * density);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeJoin(Paint.Join.ROUND);
         }
 
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            if (particles.isEmpty()) return;
+            int w = getWidth();
+            int h = getHeight();
+            if (w <= 0 || h <= 0) return;
 
-            for (int i = particles.size() - 1; i >= 0; i--) {
-                Particle p = particles.get(i);
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.06f; // Gentle gravity
-                p.vx *= 0.97f; // Drag
-                p.alpha -= p.decay;
+            float density = getResources().getDisplayMetrics().density;
+            float cx = w / 2.0f;
+            float cy = h / 2.0f;
 
-                if (p.alpha <= 0) {
-                    particles.remove(i);
-                    continue;
-                }
+            float rightX = cx + 8.0f * density;
+            float leftX = cx - 8.0f * density;
+            float topY = cy - 6.0f * density;
+            float bottomY = cy + 4.5f * density;
+            float head = 4.5f * density;
 
-                paint.setColor(p.color);
-                paint.setAlpha((int) (p.alpha * 255));
-                canvas.drawCircle(p.x, p.y, p.size, paint);
-            }
+            path.reset();
+            // Stem: down from top right then left
+            path.moveTo(rightX, topY);
+            path.lineTo(rightX, bottomY);
+            path.lineTo(leftX, bottomY);
 
-            if (!particles.isEmpty()) {
-                postInvalidateOnAnimation();
-            }
+            // Arrow head pointing left
+            path.moveTo(leftX + head, bottomY - head);
+            path.lineTo(leftX, bottomY);
+            path.lineTo(leftX + head, bottomY + head);
+
+            canvas.drawPath(path, paint);
         }
     }
 
@@ -165,67 +129,32 @@ public class InfinityKeyboardService extends InputMethodService {
         final float density = getResources().getDisplayMetrics().density;
         final int targetHeight = (int) (TOTAL_KEYBOARD_HEIGHT_DP * density);
 
-        // Root container strictly enforcing exact 260dp keyboard height
-        rootInputView = new FrameLayout(this) {
+        keyboardContainer = new LinearLayout(this) {
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 int exactHeightSpec = MeasureSpec.makeMeasureSpec(targetHeight, MeasureSpec.EXACTLY);
                 super.onMeasure(widthMeasureSpec, exactHeightSpec);
             }
         };
-        rootInputView.setLayoutParams(new ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, targetHeight));
-
-        keyboardContainer = new LinearLayout(this);
         keyboardContainer.setOrientation(LinearLayout.VERTICAL);
         keyboardContainer.setBackgroundColor(Color.parseColor("#0A0C10"));
 
         int bottomPadding = (int) (10 * density);
         int topPadding = (int) (4 * density);
         keyboardContainer.setPadding((int) (2 * density), topPadding, (int) (2 * density), bottomPadding);
-        keyboardContainer.setLayoutParams(new FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        keyboardContainer.setLayoutParams(new ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, targetHeight));
 
         renderKeyboard();
-        rootInputView.addView(keyboardContainer);
-
-        // Purple Particle Overlay layer
-        particleOverlay = new PurpleParticleOverlayView(this);
-        particleOverlay.setLayoutParams(new FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        rootInputView.addView(particleOverlay);
-
-        triggerKeyboardDissolve(true);
-        return rootInputView;
-    }
-
-    @Override
-    public void onStartInputView(EditorInfo info, boolean restarting) {
-        super.onStartInputView(info, restarting);
-        hasTypedFirstChar = false;
-        triggerKeyboardDissolve(true);
-    }
-
-    // Dissolve-in animation with smooth alpha transition and purple particles
-    private void triggerKeyboardDissolve(boolean withParticles) {
-        if (keyboardContainer != null) {
-            keyboardContainer.setAlpha(0.25f);
-            keyboardContainer.animate()
-                .alpha(1.0f)
-                .setDuration(190)
-                .start();
-        }
-        if (withParticles && particleOverlay != null) {
-            particleOverlay.post(() -> particleOverlay.burst(true));
-        }
+        return keyboardContainer;
     }
 
     @Override
     public void onComputeInsets(Insets outInsets) {
         super.onComputeInsets(outInsets);
-        if (rootInputView != null) {
+        if (keyboardContainer != null) {
             int[] loc = new int[2];
-            rootInputView.getLocationInWindow(loc);
+            keyboardContainer.getLocationInWindow(loc);
             outInsets.contentTopInsets = loc[1];
             outInsets.visibleTopInsets = loc[1];
         }
@@ -250,7 +179,7 @@ public class InfinityKeyboardService extends InputMethodService {
         String[] rowNumbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
         keyboardContainer.addView(createRowLayout(rowNumbers, false, rowHeight));
 
-        // Row 2: qwertyuiop (lowercase by default, hold/shift to capitalize)
+        // Row 2: qwertyuiop
         String[] row1 = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"};
         keyboardContainer.addView(createRowLayout(row1, true, rowHeight));
 
@@ -327,7 +256,7 @@ public class InfinityKeyboardService extends InputMethodService {
             row3Layout.addView(keyView);
         }
 
-        // Backspace key at the end of Row 4
+        // Backspace key
         FrameLayout backspaceKey = createKeyView("⌫", null, true, 1.35f);
         backspaceKey.setOnClickListener(v -> deleteChar());
         backspaceKey.setOnLongClickListener(v -> {
@@ -348,7 +277,7 @@ public class InfinityKeyboardService extends InputMethodService {
         row4Params.setMargins(0, (int) (1 * density), 0, (int) (1 * density));
         row4Layout.setLayoutParams(row4Params);
 
-        // Clean Infinity Key with purple color matching symbol keyboard, centered
+        // Centered Infinity Key with matching purple color (#C084FC)
         FrameLayout infinityKey = createKeyView("∞", null, true, 1.4f);
         TextView infTv = getMainTextView(infinityKey);
         if (infTv != null) {
@@ -402,15 +331,8 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row4Layout.addView(periodKey);
 
-        // Enter Key: slightly bigger symbol and centered
-        FrameLayout enterKey = createKeyView("↵", null, true, 1.5f);
-        TextView enterTv = getMainTextView(enterKey);
-        if (enterTv != null) {
-            enterTv.setTextSize(28);
-            enterTv.setTextColor(Color.parseColor("#38BDF8"));
-            enterTv.setGravity(Gravity.CENTER);
-            enterTv.setIncludeFontPadding(false);
-        }
+        // Enter Key: perfectly centered return arrow
+        FrameLayout enterKey = createKeyView("", null, true, 1.5f);
         int strokeWidth = (int) (1.5f * density);
         int cornerRadius = (int) (7 * density);
         GradientDrawable enterDraw = new GradientDrawable();
@@ -419,6 +341,11 @@ public class InfinityKeyboardService extends InputMethodService {
         enterDraw.setColor(Color.parseColor("#121724"));
         enterDraw.setStroke(strokeWidth, Color.parseColor("#1E3654"));
         enterKey.setBackground(enterDraw);
+
+        EnterArrowView enterArrow = new EnterArrowView(this);
+        enterArrow.setLayoutParams(new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        enterKey.addView(enterArrow);
         enterKey.setOnClickListener(v -> sendKeyChar('\n'));
         row4Layout.addView(enterKey);
 
@@ -470,12 +397,21 @@ public class InfinityKeyboardService extends InputMethodService {
             FrameLayout keyView = createKeyView(sym, null, false, 1.0f);
             TextView tv = getMainTextView(keyView);
             if (tv != null) {
-                if (sym.equals("♥")) tv.setTextColor(Color.parseColor("#F43F5E"));
-                if (sym.equals("★")) tv.setTextColor(Color.parseColor("#FBBF24"));
+                // Heart slightly smaller
+                if (sym.equals("♥")) {
+                    tv.setTextColor(Color.parseColor("#F43F5E"));
+                    tv.setTextSize(16);
+                }
+                // Star with slight blue glow
+                if (sym.equals("★")) {
+                    tv.setTextColor(Color.parseColor("#FBBF24"));
+                    tv.setTextSize(19);
+                    tv.setShadowLayer(7.0f * density, 0, 0, Color.parseColor("#38BDF8"));
+                }
                 // Matched purple color of switch infinity key (#C084FC)
                 if (sym.equals("∞")) {
                     tv.setTextColor(Color.parseColor("#C084FC"));
-                    tv.setTextSize(24);
+                    tv.setTextSize(26);
                 }
             }
             keyView.setOnClickListener(v -> commitText(sym));
@@ -563,14 +499,8 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row5Layout.addView(periodKey);
 
-        FrameLayout enterKey = createKeyView("↵", null, true, 1.5f);
-        TextView enterTv = getMainTextView(enterKey);
-        if (enterTv != null) {
-            enterTv.setTextSize(28);
-            enterTv.setTextColor(Color.parseColor("#38BDF8"));
-            enterTv.setGravity(Gravity.CENTER);
-            enterTv.setIncludeFontPadding(false);
-        }
+        // Enter Key: perfectly centered return arrow
+        FrameLayout enterKey = createKeyView("", null, true, 1.5f);
         int strokeWidth = (int) (1.5f * density);
         int cornerRadius = (int) (7 * density);
         GradientDrawable enterDraw = new GradientDrawable();
@@ -579,6 +509,11 @@ public class InfinityKeyboardService extends InputMethodService {
         enterDraw.setColor(Color.parseColor("#121724"));
         enterDraw.setStroke(strokeWidth, Color.parseColor("#1E3654"));
         enterKey.setBackground(enterDraw);
+
+        EnterArrowView enterArrow = new EnterArrowView(this);
+        enterArrow.setLayoutParams(new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        enterKey.addView(enterArrow);
         enterKey.setOnClickListener(v -> sendKeyChar('\n'));
         row5Layout.addView(enterKey);
 
@@ -738,14 +673,6 @@ public class InfinityKeyboardService extends InputMethodService {
                 performAutocorrect(ic);
             }
             ic.commitText(text, 1);
-
-            // Dissolve-in with purple particle effects on first character typed
-            if (!hasTypedFirstChar) {
-                hasTypedFirstChar = true;
-                triggerKeyboardDissolve(true);
-            } else if (particleOverlay != null) {
-                particleOverlay.burst(false);
-            }
         }
     }
 

@@ -4,7 +4,6 @@ import { KeyboardMode, KeyboardSettings } from './types/keyboard';
 import { Download, Copy, Check, Trash2, Wand2 } from 'lucide-react';
 import { GradientInfinityIcon } from './components/GradientInfinityIcon';
 import { autocorrectLastWord } from './utils/autocorrect';
-import { PurpleParticles, PurpleParticlesRef } from './components/PurpleParticles';
 
 export default function App() {
   const [typedText, setTypedText] = useState<string>('');
@@ -12,12 +11,9 @@ export default function App() {
   const [activePhysicalKey, setActivePhysicalKey] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const [autocorrectNotice, setAutocorrectNotice] = useState<string | null>(null);
-  const [isDissolving, setIsDissolving] = useState<boolean>(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const noticeTimerRef = useRef<number | null>(null);
-  const particlesRef = useRef<PurpleParticlesRef>(null);
-  const dissolveTimerRef = useRef<number | null>(null);
 
   const settings: KeyboardSettings = {
     theme: 'charcoal',
@@ -40,20 +36,8 @@ export default function App() {
     }, 2200);
   }, []);
 
-  // Insert character with selection-replace, background autocorrect, and purple dissolve effects
+  // Insert character with selection-replace and background autocorrect
   const handleInsertChar = useCallback((char: string) => {
-    const isFirstChar = typedText.length === 0;
-    if (isFirstChar) {
-      if (dissolveTimerRef.current) clearTimeout(dissolveTimerRef.current);
-      setIsDissolving(true);
-      dissolveTimerRef.current = window.setTimeout(() => {
-        setIsDissolving(false);
-      }, 750);
-      particlesRef.current?.burst(undefined, undefined, 50, true);
-    } else {
-      particlesRef.current?.burst(undefined, undefined, 14, false);
-    }
-
     const ta = textareaRef.current;
     let start = typedText.length;
     let end = typedText.length;
@@ -218,9 +202,13 @@ export default function App() {
 
       {/* Top 3-Zone Clean Header */}
       <header className="relative z-20 flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-b border-white/5 bg-[#10121a]/95 backdrop-blur-md shrink-0">
-        {/* Zone 1: Wordmark */}
+        {/* Zone 1: Wordmark with Company Logo Keycap */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <GradientInfinityIcon size={22} />
+          <img
+            src="/company-logo.png"
+            alt="Infinity Board Logo"
+            className="w-7 h-7 rounded-[7px] shadow-sm border border-white/10 object-contain"
+          />
           <span className="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap">
             Infinity Board
           </span>
@@ -238,8 +226,17 @@ export default function App() {
           <span>Background autocorrect active</span>
         </div>
 
-        {/* Zone 3: Primary Action CTA */}
+        {/* Zone 3: Primary Action CTAs */}
         <div className="flex items-center gap-2 shrink-0">
+          <a
+            href="/company-logo.png"
+            download="infinity-company-logo.png"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 font-medium text-xs transition-colors whitespace-nowrap cursor-pointer"
+            title="Download 512x512 High-Res Company Logo"
+          >
+            <Download className="w-3.5 h-3.5 text-[#b989f8]" />
+            <span>Logo PNG</span>
+          </a>
           <a
             href="/downloads/app-test.apk"
             download="app-test.apk"
@@ -334,9 +331,7 @@ export default function App() {
 
       {/* Bottom Keyboard Overlay */}
       <div className="w-full relative z-30 shrink-0">
-        <div className="w-full max-w-4xl mx-auto relative">
-          {/* Shimmering Purple Particles Effect Layer */}
-          <PurpleParticles ref={particlesRef} />
+        <div className="w-full max-w-4xl mx-auto">
           <Keyboard
             onInsertChar={handleInsertChar}
             onBackspace={handleBackspace}
@@ -346,7 +341,6 @@ export default function App() {
             setMode={setMode}
             settings={settings}
             activePhysicalKey={activePhysicalKey}
-            isDissolving={isDissolving}
           />
         </div>
       </div>

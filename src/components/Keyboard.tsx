@@ -14,7 +14,6 @@ interface KeyboardProps {
   setMode: (mode: KeyboardMode) => void;
   settings: KeyboardSettings;
   activePhysicalKey?: string | null;
-  isDissolving?: boolean;
 }
 
 export const Keyboard: React.FC<KeyboardProps> = ({
@@ -26,7 +25,6 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   setMode,
   settings,
   activePhysicalKey,
-  isDissolving = false,
 }) => {
   const [shiftState, setShiftState] = useState<ShiftState>('off');
   const lastShiftTapRef = useRef<number>(0);
@@ -69,13 +67,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   const isUppercase = shiftState !== 'off';
 
   return (
-    <div
-      className={`w-full h-[275px] sm:h-[295px] bg-[#0d0f14] border-t flex flex-col justify-between pt-1 px-1 pb-2 sm:pb-3 select-none relative z-30 transition-all duration-300 ${
-        isDissolving
-          ? 'border-t-[#c084fc]/60 shadow-[0_-12px_45px_rgba(192,132,252,0.45),0_0_65px_rgba(168,85,247,0.3)] animate-in fade-in duration-200'
-          : 'border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]'
-      }`}
-    >
+    <div className="w-full h-[275px] sm:h-[295px] bg-[#0d0f14] border-t border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] flex flex-col justify-between pt-1 px-1 pb-2 sm:pb-3 select-none relative z-30 transition-all duration-150">
       {mode === 'symbols' ? (
         <SymbolsLayout
           onInsertChar={onInsertChar}

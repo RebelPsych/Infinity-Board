@@ -1,111 +1,107 @@
 import os
 import math
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter
 
-def create_infinity_key_icon(size=512, is_round=False):
-    # Create RGBA image with 2x supersampling for ultra-crisp edges
-    ss = 2
-    W = size * ss
-    H = size * ss
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-
-    cx = W // 2
-    cy = H // 2
-
-    if is_round:
-        # Round icon: circular keycap
-        radius = int(W * 0.46)
-        # Drop shadow
-        shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        sdraw = ImageDraw.Draw(shadow)
-        sdraw.ellipse([cx - radius + 10, cy - radius + 20, cx + radius - 10, cy + radius + 30], fill=(0, 0, 0, 180))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(16 * ss))
-        img = Image.alpha_composite(img, shadow)
-        draw = ImageDraw.Draw(img)
-
-        # Base keycap fill
-        draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=(24, 27, 36, 255), outline=(68, 78, 100, 255), width=int(5 * ss))
-        # Inner sheen
-        inner_r = radius - int(6 * ss)
-        draw.ellipse([cx - inner_r, cy - inner_r, cx + inner_r, cy + inner_r], outline=(255, 255, 255, 20), width=int(2 * ss))
-    else:
-        # Squircle / rounded rectangle keycap
-        pad = int(W * 0.06)
-        r = int(W * 0.18)
-        box = [pad, pad, W - pad, H - pad]
-
-        # Drop shadow
-        shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        sdraw = ImageDraw.Draw(shadow)
-        sdraw.rounded_rectangle([box[0] + 8, box[1] + 16, box[2] - 8, box[3] + 24], radius=r, fill=(0, 0, 0, 160))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(14 * ss))
-        img = Image.alpha_composite(img, shadow)
-        draw = ImageDraw.Draw(img)
-
-        # Draw tactile keycap body
-        draw.rounded_rectangle(box, radius=r, fill=(28, 31, 42, 255), outline=(66, 75, 96, 255), width=int(5 * ss))
-        # Inner outline within borders
-        inner_box = [box[0] + int(6 * ss), box[1] + int(6 * ss), box[2] - int(6 * ss), box[3] - int(6 * ss)]
-        draw.rounded_rectangle(inner_box, radius=r - int(4 * ss), outline=(255, 255, 255, 22), width=int(2 * ss))
-
-    # Glow layer for centered infinity symbol
-    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    gdraw = ImageDraw.Draw(glow)
-
-    # Parametric lemniscate (infinity curve)
-    # x(t) = a * cos(t) / (1 + sin^2(t))
-    # y(t) = a * sin(t) * cos(t) / (1 + sin^2(t))
-    scale = W * 0.28
+def draw_solid_infinity(draw, cx, cy, width, stroke_width, color):
+    """
+    Draw a solid, thick, beautifully proportioned infinity symbol matching the photo.
+    """
+    num_steps = 1800
     points = []
-    num_steps = 720
+    scale = width * 0.46
+    
+    # Parametric lemniscate formula with circular-loop aspect
     for i in range(num_steps):
         t = (i / num_steps) * 2 * math.pi
-        denom = 1 + (math.sin(t) ** 2)
+        denom = 1.0 + (math.sin(t) ** 2)
         px = cx + (scale * math.cos(t)) / denom
-        py = cy + (scale * math.sin(t) * math.cos(t) * 1.35) / denom
-        points.append((px, py, t))
+        py = cy + (scale * math.sin(t) * math.cos(t) * 1.34) / denom
+        points.append((px, py))
+        
+    half_stroke = stroke_width / 2.0
+    for px, py in points:
+        draw.ellipse([px - half_stroke, py - half_stroke, px + half_stroke, py + half_stroke], fill=color)
 
-    # Draw soft purple glow behind infinity
-    glow_width = int(24 * ss)
-    for px, py, t in points:
-        gdraw.ellipse([px - glow_width, py - glow_width, px + glow_width, py + glow_width], fill=(192, 132, 252, 18))
-    glow = glow.filter(ImageFilter.GaussianBlur(10 * ss))
-    img = Image.alpha_composite(img, glow)
-    draw = ImageDraw.Draw(img)
+def generate_logo_icon(size=512, is_round=False):
+    # 2x supersampling for high-end corporate vector-like crispness
+    ss = 2
+    S = size * ss
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    
+    cx = S / 2.0
+    cy = S / 2.0
+    
+    # Dimensions: showing the whole key clearly with comfortable margins
+    key_w = S * 0.82
+    key_h = S * 0.82
+    corner_r = S * 0.17
+    
+    left = cx - key_w / 2.0
+    top = cy - key_h / 2.0
+    right = cx + key_w / 2.0
+    bottom = cy + key_h / 2.0
+    
+    # 1. Subtle dark background canvas so key stands out cleanly
+    if is_round:
+        draw_base = ImageDraw.Draw(img)
+        draw_base.ellipse([S * 0.015, S * 0.015, S * 0.985, S * 0.985], fill=(9, 11, 15, 255))
+    else:
+        draw_base = ImageDraw.Draw(img)
+        draw_base.rounded_rectangle([S * 0.015, S * 0.015, S * 0.985, S * 0.985], radius=int(S * 0.22), fill=(9, 11, 15, 255))
 
-    # Draw centered infinity curve with signature gradient:
-    # Left: Sky Blue (#38BDF8), Center: Purple (#C084FC), Right: Pink/Magenta (#F43F5E)
-    stroke_radius = int(14 * ss)
-    for px, py, t in points:
-        # Normalized x position across infinity loop [-1, 1]
-        norm_x = (px - cx) / scale  # roughly -1.0 to 1.0
+    # 2. Keycap Drop Shadow (soft 3D tactile elevation)
+    shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(shadow)
+    sdraw.rounded_rectangle([left + 2 * ss, top + 10 * ss, right - 2 * ss, bottom + 18 * ss], radius=int(corner_r), fill=(0, 0, 0, 220))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(12 * ss))
+    img = Image.alpha_composite(img, shadow)
 
-        if norm_x < -0.15:
-            # Left side: Sky Blue (#38BDF8) blending into Purple (#C084FC)
-            f = (norm_x + 1.0) / 0.85
-            f = max(0.0, min(1.0, f))
-            r_c = int(56 + f * (192 - 56))
-            g_c = int(189 + f * (132 - 189))
-            b_c = int(248 + f * (252 - 248))
-        else:
-            # Right side: Purple (#C084FC) blending into Pink/Magenta (#F43F5E)
-            f = (norm_x + 0.15) / 1.15
-            f = max(0.0, min(1.0, f))
-            r_c = int(192 + f * (244 - 192))
-            g_c = int(132 + f * (63 - 132))
-            b_c = int(252 + f * (94 - 252))
+    # 3. Tactile Keycap Body
+    key_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    kdraw = ImageDraw.Draw(key_layer)
+    
+    # Deep dark slate keycap surface matching photo (#181B26)
+    kdraw.rounded_rectangle([left, top, right, bottom], radius=int(corner_r), fill=(24, 27, 38, 255))
+    
+    # Outer keycap outline border (#3E485E) matching keyboard physical keys
+    border_width = int(4.5 * ss)
+    kdraw.rounded_rectangle([left, top, right, bottom], radius=int(corner_r), outline=(62, 72, 94, 255), width=border_width)
+    
+    # Inner bevel highlight outline within borders
+    inner_pad = int(4.5 * ss)
+    kdraw.rounded_rectangle(
+        [left + inner_pad, top + inner_pad, right - inner_pad, bottom - inner_pad],
+        radius=int(corner_r - 2.5 * ss),
+        outline=(255, 255, 255, 18),
+        width=int(1.5 * ss)
+    )
+    
+    # Subtle top keycap surface sheen
+    kdraw.line([left + corner_r, top + inner_pad + int(1 * ss), right - corner_r, top + inner_pad + int(1 * ss)], fill=(255, 255, 255, 36), width=int(2 * ss))
+    
+    img = Image.alpha_composite(img, key_layer)
 
-        draw.ellipse([px - stroke_radius, py - stroke_radius, px + stroke_radius, py + stroke_radius], fill=(r_c, g_c, b_c, 255))
+    # 4. Soft purple ambient glow aura behind the infinity symbol
+    glow_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    gdraw = ImageDraw.Draw(glow_layer)
+    # Luminous violet glow
+    draw_solid_infinity(gdraw, cx, cy, width=key_w * 0.65, stroke_width=int(38 * ss), color=(184, 137, 248, 60))
+    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(14 * ss))
+    img = Image.alpha_composite(img, glow_layer)
 
-    # Inner core highlight line for 3D metallic neon pop
-    core_radius = int(5 * ss)
-    for px, py, t in points:
-        draw.ellipse([px - core_radius, py - core_radius, px + core_radius, py + core_radius], fill=(255, 255, 255, 80))
+    # 5. Bold, solid purple infinity symbol matching the photo (#B888F8)
+    sym_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    sym_draw = ImageDraw.Draw(sym_layer)
+    
+    # Exact solid purple color sampled from user photo
+    solid_purple = (185, 137, 248, 255) # #B989F8
+    draw_solid_infinity(sym_draw, cx, cy, width=key_w * 0.64, stroke_width=int(32 * ss), color=solid_purple)
+    
+    img = Image.alpha_composite(img, sym_layer)
 
-    # Downscale from 2x supersampling to target size
-    img = img.resize((size, size), Image.Resampling.LANCZOS)
-    return img
+    # Downsample to target size with Lanczos filter for pristine edges
+    final_img = img.resize((size, size), Image.Resampling.LANCZOS)
+    return final_img
 
 def main():
     densities = {
@@ -115,27 +111,25 @@ def main():
         "mipmap-xxhdpi": 144,
         "mipmap-xxxhdpi": 192,
     }
-
+    
     base_res = "app/src/main/res"
-    for folder, size in densities.items():
-        target_dir = os.path.join(base_res, folder)
-        os.makedirs(target_dir, exist_ok=True)
-
-        # Standard icon
-        icon = create_infinity_key_icon(size, is_round=False)
-        icon.save(os.path.join(target_dir, "ic_launcher.png"), "PNG")
-
-        # Round icon
-        round_icon = create_infinity_key_icon(size, is_round=True)
-        round_icon.save(os.path.join(target_dir, "ic_launcher_round.png"), "PNG")
-        print(f"Generated {folder}: {size}x{size}")
-
-    # Also save 512x512 high-res store icon
+    for folder, sz in densities.items():
+        tdir = os.path.join(base_res, folder)
+        os.makedirs(tdir, exist_ok=True)
+        
+        sq = generate_logo_icon(sz, is_round=False)
+        sq.save(os.path.join(tdir, "ic_launcher.png"), "PNG")
+        
+        rd = generate_logo_icon(sz, is_round=True)
+        rd.save(os.path.join(tdir, "ic_launcher_round.png"), "PNG")
+        print(f"Generated {folder}: {sz}x{sz}")
+        
     os.makedirs("public/icons", exist_ok=True)
-    icon_512 = create_infinity_key_icon(512, is_round=False)
+    icon_512 = generate_logo_icon(512, is_round=False)
     icon_512.save("public/icons/icon-512.png", "PNG")
     icon_512.save("public/icon.png", "PNG")
-    print("Generated 512x512 icon at public/icons/icon-512.png")
+    icon_512.save("public/company-logo.png", "PNG")
+    print("Generated 512x512 company logo icon at public/icons/icon-512.png and public/company-logo.png")
 
 if __name__ == "__main__":
     main()
