@@ -1,135 +1,183 @@
+#!/usr/bin/env python3
+"""
+Generates the Infinity Board Android App Icons and Company Logo.
+Matches the exact infinity key pictured in the user's photo:
+- Dark tactile keycap (#151821)
+- Subtle steel keycap outline border (#2E3546)
+- Soft hairline top inner bevel highlight
+- Exact solid luminous lilac-purple infinity symbol (#C084FC / #B989F8)
+  using DejaVuSans-Bold typeface matching Android's system font glyph.
+- Multi-density mipmaps (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
+- Adaptive icon layers (v26) for seamless fit on all Android launchers
+- 512x512 Master company logo at public/company-logo.png and public/icon.png
+"""
+
 import os
-import math
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-def draw_solid_infinity(draw, cx, cy, width, stroke_width, color):
-    """
-    Draw a solid, thick, beautifully proportioned infinity symbol matching the photo.
-    """
-    num_steps = 1800
-    points = []
-    scale = width * 0.46
-    
-    # Parametric lemniscate formula with circular-loop aspect
-    for i in range(num_steps):
-        t = (i / num_steps) * 2 * math.pi
-        denom = 1.0 + (math.sin(t) ** 2)
-        px = cx + (scale * math.cos(t)) / denom
-        py = cy + (scale * math.sin(t) * math.cos(t) * 1.34) / denom
-        points.append((px, py))
-        
-    half_stroke = stroke_width / 2.0
-    for px, py in points:
-        draw.ellipse([px - half_stroke, py - half_stroke, px + half_stroke, py + half_stroke], fill=color)
+FONT_PATH = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
-def generate_logo_icon(size=512, is_round=False):
-    # 2x supersampling for high-end corporate vector-like crispness
-    ss = 2
-    S = size * ss
-    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+def render_keycap(size=512, is_round=False):
+    ss = 4
+    canvas = size * ss
+    im = Image.new('RGBA', (canvas, canvas), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
     
-    cx = S / 2.0
-    cy = S / 2.0
+    KEY_BG = (21, 24, 33, 255)         # #151821
+    KEY_BORDER = (46, 53, 70, 255)     # #2E3546
+    INNER_STROKE = (255, 255, 255, 14) # tactile top bevel highlight
+    GLYPH_COLOR = (192, 132, 252, 255) # #C084FC
+    GLYPH_GLOW = (192, 132, 252, 35)
     
-    # Dimensions: showing the whole key clearly with comfortable margins
-    key_w = S * 0.82
-    key_h = S * 0.82
-    corner_r = S * 0.17
+    border_w = max(1, int(12 * ss * (size / 512.0)))
+    pad = int(border_w / 2)
+    x0, y0 = pad, pad
+    x1, y1 = canvas - pad, canvas - pad
     
-    left = cx - key_w / 2.0
-    top = cy - key_h / 2.0
-    right = cx + key_w / 2.0
-    bottom = cy + key_h / 2.0
-    
-    # 1. Subtle dark background canvas so key stands out cleanly
     if is_round:
-        draw_base = ImageDraw.Draw(img)
-        draw_base.ellipse([S * 0.015, S * 0.015, S * 0.985, S * 0.985], fill=(9, 11, 15, 255))
+        draw.ellipse([x0, y0, x1, y1], fill=KEY_BG, outline=KEY_BORDER, width=border_w)
+        inner_pad = max(1, int(8 * ss * (size / 512.0)))
+        draw.ellipse([x0 + inner_pad, y0 + inner_pad, x1 - inner_pad, y1 - inner_pad], outline=INNER_STROKE, width=max(1, int(2 * ss * (size / 512.0))))
+        font_size = int(410 * ss * (size / 512.0))
     else:
-        draw_base = ImageDraw.Draw(img)
-        draw_base.rounded_rectangle([S * 0.015, S * 0.015, S * 0.985, S * 0.985], radius=int(S * 0.22), fill=(9, 11, 15, 255))
+        corner_r = int(canvas * 0.15)
+        draw.rounded_rectangle([x0, y0, x1, y1], radius=corner_r, fill=KEY_BG, outline=KEY_BORDER, width=border_w)
+        inner_pad = max(1, int(8 * ss * (size / 512.0)))
+        draw.rounded_rectangle([x0 + inner_pad, y0 + inner_pad, x1 - inner_pad, y1 - inner_pad],
+                               radius=max(1, corner_r - inner_pad),
+                               outline=INNER_STROKE, width=max(1, int(2 * ss * (size / 512.0))))
+        font_size = int(430 * ss * (size / 512.0))
+        
+    font = ImageFont.truetype(FONT_PATH, font_size)
+    cx = canvas / 2.0
+    cy = canvas / 2.0
+    
+    # Soft purple glow behind glyph
+    glow_im = Image.new('RGBA', (canvas, canvas), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow_im)
+    glow_draw.text((cx, cy), '∞', fill=GLYPH_GLOW, font=font, anchor='mm')
+    glow_blur = max(1, int(22 * ss * (size / 512.0)))
+    glow_im = glow_im.filter(ImageFilter.GaussianBlur(radius=glow_blur))
+    im = Image.alpha_composite(im, glow_im)
+    draw = ImageDraw.Draw(im)
+    
+    # Solid purple infinity glyph
+    draw.text((cx, cy), '∞', fill=GLYPH_COLOR, font=font, anchor='mm')
+    
+    return im.resize((size, size), Image.Resampling.LANCZOS)
 
-    # 2. Keycap Drop Shadow (soft 3D tactile elevation)
-    shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    sdraw = ImageDraw.Draw(shadow)
-    sdraw.rounded_rectangle([left + 2 * ss, top + 10 * ss, right - 2 * ss, bottom + 18 * ss], radius=int(corner_r), fill=(0, 0, 0, 220))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(12 * ss))
-    img = Image.alpha_composite(img, shadow)
-
-    # 3. Tactile Keycap Body
-    key_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    kdraw = ImageDraw.Draw(key_layer)
+def render_adaptive_foreground(size=432):
+    """
+    Renders the foreground for Android adaptive icons (108dp canvas with 72dp safe zone).
+    The glyph is scaled to sit comfortably inside the center 66% safe circle/squircle.
+    """
+    ss = 4
+    canvas = size * ss
+    im = Image.new('RGBA', (canvas, canvas), (0, 0, 0, 0))
     
-    # Deep dark slate keycap surface matching photo (#181B26)
-    kdraw.rounded_rectangle([left, top, right, bottom], radius=int(corner_r), fill=(24, 27, 38, 255))
+    GLYPH_COLOR = (192, 132, 252, 255)
+    GLYPH_GLOW = (192, 132, 252, 40)
     
-    # Outer keycap outline border (#3E485E) matching keyboard physical keys
-    border_width = int(4.5 * ss)
-    kdraw.rounded_rectangle([left, top, right, bottom], radius=int(corner_r), outline=(62, 72, 94, 255), width=border_width)
+    # The glyph in 108dp canvas should have width ~48dp (which is 44% of 108dp)
+    font_size = int(canvas * 0.46)
+    font = ImageFont.truetype(FONT_PATH, font_size)
     
-    # Inner bevel highlight outline within borders
-    inner_pad = int(4.5 * ss)
-    kdraw.rounded_rectangle(
-        [left + inner_pad, top + inner_pad, right - inner_pad, bottom - inner_pad],
-        radius=int(corner_r - 2.5 * ss),
-        outline=(255, 255, 255, 18),
-        width=int(1.5 * ss)
-    )
+    cx = canvas / 2.0
+    cy = canvas / 2.0
     
-    # Subtle top keycap surface sheen
-    kdraw.line([left + corner_r, top + inner_pad + int(1 * ss), right - corner_r, top + inner_pad + int(1 * ss)], fill=(255, 255, 255, 36), width=int(2 * ss))
+    glow_im = Image.new('RGBA', (canvas, canvas), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow_im)
+    glow_draw.text((cx, cy), '∞', fill=GLYPH_GLOW, font=font, anchor='mm')
+    glow_blur = max(1, int(18 * ss * (size / 432.0)))
+    glow_im = glow_im.filter(ImageFilter.GaussianBlur(radius=glow_blur))
+    im = Image.alpha_composite(im, glow_im)
+    draw = ImageDraw.Draw(im)
     
-    img = Image.alpha_composite(img, key_layer)
-
-    # 4. Soft purple ambient glow aura behind the infinity symbol
-    glow_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    gdraw = ImageDraw.Draw(glow_layer)
-    # Luminous violet glow
-    draw_solid_infinity(gdraw, cx, cy, width=key_w * 0.65, stroke_width=int(38 * ss), color=(184, 137, 248, 60))
-    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(14 * ss))
-    img = Image.alpha_composite(img, glow_layer)
-
-    # 5. Bold, solid purple infinity symbol matching the photo (#B888F8)
-    sym_layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    sym_draw = ImageDraw.Draw(sym_layer)
-    
-    # Exact solid purple color sampled from user photo
-    solid_purple = (185, 137, 248, 255) # #B989F8
-    draw_solid_infinity(sym_draw, cx, cy, width=key_w * 0.64, stroke_width=int(32 * ss), color=solid_purple)
-    
-    img = Image.alpha_composite(img, sym_layer)
-
-    # Downsample to target size with Lanczos filter for pristine edges
-    final_img = img.resize((size, size), Image.Resampling.LANCZOS)
-    return final_img
+    draw.text((cx, cy), '∞', fill=GLYPH_COLOR, font=font, anchor='mm')
+    return im.resize((size, size), Image.Resampling.LANCZOS)
 
 def main():
     densities = {
-        "mipmap-mdpi": 48,
-        "mipmap-hdpi": 72,
-        "mipmap-xhdpi": 96,
-        "mipmap-xxhdpi": 144,
-        "mipmap-xxxhdpi": 192,
+        'mipmap-mdpi': 48,
+        'mipmap-hdpi': 72,
+        'mipmap-xhdpi': 96,
+        'mipmap-xxhdpi': 144,
+        'mipmap-xxxhdpi': 192,
     }
     
-    base_res = "app/src/main/res"
-    for folder, sz in densities.items():
-        tdir = os.path.join(base_res, folder)
-        os.makedirs(tdir, exist_ok=True)
+    adaptive_densities = {
+        'drawable-mdpi': 108,
+        'drawable-hdpi': 162,
+        'drawable-xhdpi': 216,
+        'drawable-xxhdpi': 324,
+        'drawable-xxxhdpi': 432,
+    }
+    
+    base_res = 'app/src/main/res'
+    
+    # Generate mipmaps for all densities
+    for folder, size in densities.items():
+        dir_path = os.path.join(base_res, folder)
+        os.makedirs(dir_path, exist_ok=True)
         
-        sq = generate_logo_icon(sz, is_round=False)
-        sq.save(os.path.join(tdir, "ic_launcher.png"), "PNG")
+        # Standard keycap launcher icon
+        std_icon = render_keycap(size, is_round=False)
+        std_icon.save(os.path.join(dir_path, 'ic_launcher.png'))
         
-        rd = generate_logo_icon(sz, is_round=True)
-        rd.save(os.path.join(tdir, "ic_launcher_round.png"), "PNG")
-        print(f"Generated {folder}: {sz}x{sz}")
-        
-    os.makedirs("public/icons", exist_ok=True)
-    icon_512 = generate_logo_icon(512, is_round=False)
-    icon_512.save("public/icons/icon-512.png", "PNG")
-    icon_512.save("public/icon.png", "PNG")
-    icon_512.save("public/company-logo.png", "PNG")
-    print("Generated 512x512 company logo icon at public/icons/icon-512.png and public/company-logo.png")
+        # Round launcher icon
+        rnd_icon = render_keycap(size, is_round=True)
+        rnd_icon.save(os.path.join(dir_path, 'ic_launcher_round.png'))
+        print(f"Generated {folder}: {size}x{size}")
 
-if __name__ == "__main__":
+    # Generate adaptive foreground drawables
+    for folder, size in adaptive_densities.items():
+        dir_path = os.path.join(base_res, folder)
+        os.makedirs(dir_path, exist_ok=True)
+        fg_icon = render_adaptive_foreground(size)
+        fg_icon.save(os.path.join(dir_path, 'ic_launcher_foreground.png'))
+        print(f"Generated adaptive {folder}: {size}x{size}")
+        
+    # Create adaptive background drawable
+    drawable_dir = os.path.join(base_res, 'drawable')
+    os.makedirs(drawable_dir, exist_ok=True)
+    with open(os.path.join(drawable_dir, 'ic_launcher_background.xml'), 'w') as f:
+        f.write('''<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#151821" />
+</shape>
+''')
+
+    # Create mipmap-anydpi-v26 for Android 8.0+ adaptive icons
+    anydpi_dir = os.path.join(base_res, 'mipmap-anydpi-v26')
+    os.makedirs(anydpi_dir, exist_ok=True)
+    
+    with open(os.path.join(anydpi_dir, 'ic_launcher.xml'), 'w') as f:
+        f.write('''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
+''')
+        
+    with open(os.path.join(anydpi_dir, 'ic_launcher_round.xml'), 'w') as f:
+        f.write('''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
+''')
+
+    # Master high-res company logo and web icons
+    os.makedirs('public/icons', exist_ok=True)
+    logo_512 = render_keycap(512, is_round=False)
+    logo_512.save('public/company-logo.png')
+    logo_512.save('public/icon.png')
+    logo_512.save('public/icons/icon-512.png')
+    
+    logo_192 = render_keycap(192, is_round=False)
+    logo_192.save('public/icons/icon-192.png')
+    
+    print("Generated 512x512 Master Company Logo at public/company-logo.png and public/icon.png")
+
+if __name__ == '__main__':
     main()
