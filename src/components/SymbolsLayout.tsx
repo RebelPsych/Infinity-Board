@@ -115,26 +115,44 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
         />
       </div>
 
-      {/* Row 4: $ ( + - # ÷ x ) % */}
+      {/* Row 4: $ ( + - # ÷ x ) % with underscore secondary on minus key */}
       <div className="flex w-full h-[19%] items-stretch justify-center gap-0.5 px-[1.5%]">
-        {row4Symbols.map((sym) => (
-          <Key
-            key={sym}
-            label={sym}
-            value={sym}
-            onClick={() => onInsertChar(sym)}
-            settings={settings}
-            flexGrow={1}
-          />
-        ))}
+        {row4Symbols.map((sym) => {
+          if (sym === '-') {
+            return (
+              <Key
+                key={sym}
+                label="-"
+                value="-"
+                subLabel="_"
+                longPressChar="_"
+                onClick={() => onInsertChar('-')}
+                onLongPressChar={(char) => onInsertChar(char)}
+                settings={settings}
+                flexGrow={1}
+                ariaLabel="Minus, hold for underscore"
+              />
+            );
+          }
+          return (
+            <Key
+              key={sym}
+              label={sym}
+              value={sym}
+              onClick={() => onInsertChar(sym)}
+              settings={settings}
+              flexGrow={1}
+            />
+          );
+        })}
       </div>
 
-      {/* Row 5: ABC key, Comma, Space, Period, Enter */}
+      {/* Row 5: ABC key, Comma (hold for !), Space, Period (hold for ?), Enter */}
       <div className="flex w-full h-[22%] items-stretch justify-center gap-0.5">
-        {/* ABC Key to switch back to Main Keyboard */}
+        {/* ABC Key colored purple */}
         <Key
           label={
-            <div className="flex items-center gap-1 font-bold text-sky-400">
+            <div className="flex items-center gap-1 font-bold text-[#b989f8]">
               <span className="text-[14px] sm:text-[16px] font-black tracking-wider">ABC</span>
             </div>
           }
@@ -146,17 +164,17 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
         />
 
-        {/* Comma (,) - Hold for (?) */}
+        {/* Comma (,) - Hold for (!) */}
         <Key
           label=","
           value=","
-          subLabel="?"
-          longPressChar="?"
+          subLabel="!"
+          longPressChar="!"
           onClick={() => onInsertChar(',')}
           onLongPressChar={(char) => onInsertChar(char)}
           settings={settings}
           flexGrow={1.1}
-          ariaLabel="Comma, hold for question mark"
+          ariaLabel="Comma, hold for exclamation mark"
         />
 
         {/* Spacebar */}
@@ -173,24 +191,24 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           ariaLabel="Space bar"
         />
 
-        {/* Period (.) - Hold for (!) */}
+        {/* Period (.) - Colored purple, Hold for (?) */}
         <Key
-          label="."
+          label={<span className="text-[#b989f8] font-bold">.</span>}
           value="."
-          subLabel="!"
-          longPressChar="!"
+          subLabel="?"
+          longPressChar="?"
           onClick={() => onInsertChar('.')}
           onLongPressChar={(char) => onInsertChar(char)}
           settings={settings}
           flexGrow={1.1}
-          ariaLabel="Period, hold for exclamation mark"
+          ariaLabel="Period, hold for question mark"
         />
 
-        {/* Enter Key: bigger symbol and centered */}
+        {/* Enter Key: return arrow colored purple */}
         <Key
           label={
             <div className="w-full h-full flex items-center justify-center">
-              <CornerDownLeft className="w-7 h-7 text-sky-400 stroke-[2.4]" />
+              <CornerDownLeft className="w-7 h-7 text-[#b989f8] stroke-[2.4]" />
             </div>
           }
           isSpecial
@@ -199,7 +217,7 @@ export const SymbolsLayout: React.FC<SymbolsLayoutProps> = ({
           specialType="enter"
           flexGrow={1.5}
           ariaLabel="Enter"
-          className="border-sky-500/25 bg-[#141824] hover:bg-[#1c2233]"
+          className="border-purple-500/30 bg-[#191424] hover:bg-[#231a33]"
         />
       </div>
     </div>

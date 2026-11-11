@@ -84,7 +84,7 @@ public class InfinityKeyboardService extends InputMethodService {
 
         public EnterArrowView(Context context) {
             super(context);
-            paint.setColor(Color.parseColor("#38BDF8"));
+            paint.setColor(Color.parseColor("#C084FC"));
             paint.setStyle(Paint.Style.STROKE);
             float density = getResources().getDisplayMetrics().density;
             paint.setStrokeWidth(2.3f * density);
@@ -220,11 +220,11 @@ public class InfinityKeyboardService extends InputMethodService {
             GradientDrawable activeShift = new GradientDrawable();
             activeShift.setShape(GradientDrawable.RECTANGLE);
             activeShift.setCornerRadius(cornerRadius);
-            activeShift.setColor(Color.parseColor("#1C2433"));
-            activeShift.setStroke(strokeWidth, Color.parseColor("#38BDF8"));
+            activeShift.setColor(Color.parseColor("#1E152A"));
+            activeShift.setStroke(strokeWidth, Color.parseColor("#C084FC"));
             shiftKey.setBackground(activeShift);
             if (shiftTv != null) {
-                shiftTv.setTextColor(Color.parseColor("#38BDF8"));
+                shiftTv.setTextColor(Color.parseColor("#C084FC"));
             }
         }
         shiftKey.setOnClickListener(v -> {
@@ -292,13 +292,13 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row4Layout.addView(infinityKey);
 
-        // Comma key with small '?' in upper right corner, hold for '?'
-        FrameLayout commaKey = createKeyView(",", "?", false, 1.1f);
+        // Comma key with small '!' in upper right corner, hold for '!'
+        FrameLayout commaKey = createKeyView(",", "!", false, 1.1f);
         TextView commaTv = getMainTextView(commaKey);
         if (commaTv != null) commaTv.setTextSize(24);
         commaKey.setOnClickListener(v -> commitText(","));
         commaKey.setOnLongClickListener(v -> {
-            commitText("?");
+            commitText("!");
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             return true;
         });
@@ -319,27 +319,30 @@ public class InfinityKeyboardService extends InputMethodService {
         spaceKey.setOnClickListener(v -> commitText(" "));
         row4Layout.addView(spaceKey);
 
-        // Period key with small '!' in upper right corner, hold for '!'
-        FrameLayout periodKey = createKeyView(".", "!", false, 1.1f);
+        // Period key with small '?' in upper right corner, hold for '?' (colored purple)
+        FrameLayout periodKey = createKeyView(".", "?", false, 1.1f);
         TextView periodTv = getMainTextView(periodKey);
-        if (periodTv != null) periodTv.setTextSize(24);
+        if (periodTv != null) {
+            periodTv.setTextSize(24);
+            periodTv.setTextColor(Color.parseColor("#C084FC"));
+        }
         periodKey.setOnClickListener(v -> commitText("."));
         periodKey.setOnLongClickListener(v -> {
-            commitText("!");
+            commitText("?");
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             return true;
         });
         row4Layout.addView(periodKey);
 
-        // Enter Key: perfectly centered return arrow
+        // Enter Key: return arrow colored purple
         FrameLayout enterKey = createKeyView("", null, true, 1.5f);
         int strokeWidth = (int) (1.5f * density);
         int cornerRadius = (int) (7 * density);
         GradientDrawable enterDraw = new GradientDrawable();
         enterDraw.setShape(GradientDrawable.RECTANGLE);
         enterDraw.setCornerRadius(cornerRadius);
-        enterDraw.setColor(Color.parseColor("#121724"));
-        enterDraw.setStroke(strokeWidth, Color.parseColor("#1E3654"));
+        enterDraw.setColor(Color.parseColor("#181324"));
+        enterDraw.setStroke(strokeWidth, Color.parseColor("#4A2E6B"));
         enterKey.setBackground(enterDraw);
 
         EnterArrowView enterArrow = new EnterArrowView(this);
@@ -436,13 +439,25 @@ public class InfinityKeyboardService extends InputMethodService {
 
         for (String s : row4Syms) {
             final String sym = s;
-            FrameLayout keyView = createKeyView(sym, null, false, 1.0f);
-            keyView.setOnClickListener(v -> commitText(sym));
-            row4Layout.addView(keyView);
+            if (sym.equals("-")) {
+                // Minus sign key with underscore secondary longpress
+                FrameLayout keyView = createKeyView("-", "_", false, 1.0f);
+                keyView.setOnClickListener(v -> commitText("-"));
+                keyView.setOnLongClickListener(v -> {
+                    commitText("_");
+                    v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    return true;
+                });
+                row4Layout.addView(keyView);
+            } else {
+                FrameLayout keyView = createKeyView(sym, null, false, 1.0f);
+                keyView.setOnClickListener(v -> commitText(sym));
+                row4Layout.addView(keyView);
+            }
         }
         keyboardContainer.addView(row4Layout);
 
-        // Row 5: ABC key, Comma (with ?), Space, Period (with !), Enter
+        // Row 5: ABC key, Comma (with !), Space, Period (with ?), Enter
         LinearLayout row5Layout = new LinearLayout(this);
         row5Layout.setOrientation(LinearLayout.HORIZONTAL);
         int bottomRowHeight = (int) (BOTTOM_ROW_HEIGHT_DP * density);
@@ -455,7 +470,7 @@ public class InfinityKeyboardService extends InputMethodService {
         TextView abcTv = getMainTextView(abcKey);
         if (abcTv != null) {
             abcTv.setTextSize(14);
-            abcTv.setTextColor(Color.parseColor("#38BDF8"));
+            abcTv.setTextColor(Color.parseColor("#C084FC"));
         }
         abcKey.setOnClickListener(v -> {
             isSymbols = false;
@@ -463,12 +478,12 @@ public class InfinityKeyboardService extends InputMethodService {
         });
         row5Layout.addView(abcKey);
 
-        FrameLayout commaKey = createKeyView(",", "?", false, 1.1f);
+        FrameLayout commaKey = createKeyView(",", "!", false, 1.1f);
         TextView commaTv = getMainTextView(commaKey);
         if (commaTv != null) commaTv.setTextSize(24);
         commaKey.setOnClickListener(v -> commitText(","));
         commaKey.setOnLongClickListener(v -> {
-            commitText("?");
+            commitText("!");
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             return true;
         });
@@ -488,26 +503,29 @@ public class InfinityKeyboardService extends InputMethodService {
         spaceKey.setOnClickListener(v -> commitText(" "));
         row5Layout.addView(spaceKey);
 
-        FrameLayout periodKey = createKeyView(".", "!", false, 1.1f);
+        FrameLayout periodKey = createKeyView(".", "?", false, 1.1f);
         TextView periodTv = getMainTextView(periodKey);
-        if (periodTv != null) periodTv.setTextSize(24);
+        if (periodTv != null) {
+            periodTv.setTextSize(24);
+            periodTv.setTextColor(Color.parseColor("#C084FC"));
+        }
         periodKey.setOnClickListener(v -> commitText("."));
         periodKey.setOnLongClickListener(v -> {
-            commitText("!");
+            commitText("?");
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             return true;
         });
         row5Layout.addView(periodKey);
 
-        // Enter Key: perfectly centered return arrow
+        // Enter Key: return arrow colored purple
         FrameLayout enterKey = createKeyView("", null, true, 1.5f);
         int strokeWidth = (int) (1.5f * density);
         int cornerRadius = (int) (7 * density);
         GradientDrawable enterDraw = new GradientDrawable();
         enterDraw.setShape(GradientDrawable.RECTANGLE);
         enterDraw.setCornerRadius(cornerRadius);
-        enterDraw.setColor(Color.parseColor("#121724"));
-        enterDraw.setStroke(strokeWidth, Color.parseColor("#1E3654"));
+        enterDraw.setColor(Color.parseColor("#181324"));
+        enterDraw.setStroke(strokeWidth, Color.parseColor("#4A2E6B"));
         enterKey.setBackground(enterDraw);
 
         EnterArrowView enterArrow = new EnterArrowView(this);
@@ -591,7 +609,7 @@ public class InfinityKeyboardService extends InputMethodService {
         if (subText != null && !subText.isEmpty()) {
             TextView subTv = new TextView(this);
             subTv.setText(subText);
-            subTv.setTextColor(Color.parseColor("#38BDF8")); // Vibrant cyan/sky blue
+            subTv.setTextColor(Color.parseColor("#C084FC")); // Matching purple of infinity sign logo
             subTv.setTextSize(11);
             subTv.setTypeface(Typeface.DEFAULT_BOLD);
 

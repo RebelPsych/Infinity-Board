@@ -190,7 +190,7 @@ export const Key: React.FC<KeyProps> = memo(({
               {label}
             </span>
             {subLabel && (
-              <span className="absolute top-1 right-1.5 text-[11px] sm:text-[12px] text-sky-400 font-black leading-none select-none pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              <span className="absolute top-1 right-1.5 text-[11px] sm:text-[12px] text-[#b989f8] font-black leading-none select-none pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 {subLabel}
               </span>
             )}

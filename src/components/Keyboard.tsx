@@ -148,12 +148,12 @@ export const Keyboard: React.FC<KeyboardProps> = ({
                   <ArrowBigUp
                     className={`w-6 h-6 transition-all duration-100 ${
                       shiftState !== 'off'
-                        ? 'fill-sky-400 text-sky-400 scale-105'
+                        ? 'fill-[#b989f8] text-[#b989f8] scale-105'
                         : 'text-slate-200'
                     }`}
                   />
                   {shiftState === 'caps' && (
-                    <span className="absolute -bottom-2 text-[7px] font-black uppercase text-sky-400 tracking-wider">
+                    <span className="absolute -bottom-2 text-[7px] font-black uppercase text-[#b989f8] tracking-wider">
                       CAPS
                     </span>
                   )}
@@ -165,7 +165,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               settings={settings}
               flexGrow={1.4}
               ariaLabel="Shift / Caps Lock"
-              className={shiftState !== 'off' ? 'border-sky-500/50 bg-[#1c2433] text-sky-300' : ''}
+              className={shiftState !== 'off' ? 'border-[#b989f8]/50 bg-[#1c1628] text-[#b989f8]' : ''}
             />
 
             {/* z x c v b n m */}
@@ -217,17 +217,17 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               className="border-[#272b38] bg-[#14161d] hover:bg-[#1a1d25]"
             />
 
-            {/* Comma (,) - Hold for (?) */}
+            {/* Comma (,) - Hold for (!) */}
             <Key
               label=","
               value=","
-              subLabel="?"
-              longPressChar="?"
+              subLabel="!"
+              longPressChar="!"
               onClick={() => onInsertChar(',')}
               onLongPressChar={(char) => onInsertChar(char)}
               settings={settings}
               flexGrow={1.1}
-              ariaLabel="Comma, hold for question mark"
+              ariaLabel="Comma, hold for exclamation mark"
             />
 
             {/* Spacebar (clean, tactile look) */}
@@ -244,24 +244,24 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               ariaLabel="Space bar"
             />
 
-            {/* Period (.) - Hold for (!) */}
+            {/* Period (.) - Colored purple, Hold for (?) */}
             <Key
-              label="."
+              label={<span className="text-[#b989f8] font-bold">.</span>}
               value="."
-              subLabel="!"
-              longPressChar="!"
+              subLabel="?"
+              longPressChar="?"
               onClick={() => onInsertChar('.')}
               onLongPressChar={(char) => onInsertChar(char)}
               settings={settings}
               flexGrow={1.1}
-              ariaLabel="Period, hold for exclamation mark"
+              ariaLabel="Period, hold for question mark"
             />
 
-            {/* Enter Key: bigger symbol and centered */}
+            {/* Enter Key: return arrow colored purple */}
             <Key
               label={
                 <div className="w-full h-full flex items-center justify-center">
-                  <CornerDownLeft className="w-7 h-7 text-sky-400 stroke-[2.4]" />
+                  <CornerDownLeft className="w-7 h-7 text-[#b989f8] stroke-[2.4]" />
                 </div>
               }
               isSpecial
@@ -270,7 +270,7 @@ export const Keyboard: React.FC<KeyboardProps> = ({
               specialType="enter"
               flexGrow={1.5}
               ariaLabel="Enter / Return"
-              className="border-sky-500/25 bg-[#141824] hover:bg-[#1c2233]"
+              className="border-purple-500/30 bg-[#191424] hover:bg-[#231a33]"
             />
           </div>
         </div>

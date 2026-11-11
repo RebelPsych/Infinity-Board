@@ -219,9 +219,11 @@ export default function App() {
 
         {/* Zone 2: Concise Unboxed Helper Text */}
         <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <span>Hold , for ?</span>
+          <span>Hold , for !</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
-          <span>Hold . for !</span>
+          <span>Hold . for ?</span>
+          <span aria-hidden="true" className="text-slate-600">·</span>
+          <span>Hold - for _</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
           <span>Background autocorrect active</span>
         </div>
@@ -304,7 +306,7 @@ export default function App() {
                 ref={textareaRef}
                 value={typedText}
                 onChange={handleTextareaChange}
-                placeholder="Highlight any word and tap Backspace to delete. Hold , for ? and . for ! (autocorrect active)..."
+                placeholder="Highlight any word and tap Backspace to delete. Hold , for ! and . for ?, hold - for _ (autocorrect active)..."
                 className="w-full h-full min-h-[80px] sm:min-h-[100px] max-h-[180px] bg-transparent text-white text-lg sm:text-2xl font-normal leading-relaxed resize-none focus:outline-none selection:bg-sky-500/30 selection:text-white caret-sky-400 placeholder:text-slate-500 placeholder:text-sm sm:placeholder:text-base font-sans"
                 rows={3}
               />
